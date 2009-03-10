@@ -1,0 +1,14 @@
+#summary One-sentence summary of this page.
+If you use this code please let us know. 
+
+= Introduction =
+
+More users = more support from NASA for this code. Please let us know if you use it in your work by signing up on the I3RC web site (http://i3rc.gsfc.nasa.gov/I3RC_community_model.htm). 
+
+= Details =
+
+If you publish results obtained with this code, please refer to it as the _I3RC 
+Community Monte Carlo model_ and reference the I3RC overview paper by Bob 
+Cahalan (http://dx.doi.org://10.1175/BAMS-86-9-1275) and the paper by 
+Robert Pincus and Frank Evans (submitted to J. Atmos. Sci in March 2009; 
+current status available from http://www.psd.esrl.noaa.gov/people/robert.pincus/Papers/3DRT-Models/). 
