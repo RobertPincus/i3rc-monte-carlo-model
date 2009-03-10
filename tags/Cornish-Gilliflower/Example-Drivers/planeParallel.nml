@@ -1,0 +1,120 @@
+! $Revision: 1.7 $, $Date: 2008/11/24 21:02:12 $
+! $Name: Cornish-Gilliflower $
+! Namelists to define plane parallel problem 
+!
+                               
+!
+! Parameters controlling the illumination and viewing angles and the surface
+!
+&radiativeTransfer
+  ! Cosine of the solar zenith angle
+  solarMu = 0.5,  
+  ! Azimuthal direction of incoming photons (0 = +x direction)
+  solarAzimuth = 0.
+  ! Lambertian surface albedo
+  surfaceAlbedo = 0.0, 
+  ! Cosine of directions at which to compute intensity (+ve)
+  !   The number should match the number of azimuths below.  
+  ! intensityMus = 1., .5, .5,
+  ! Azimuth of direction at which to compute intensity
+  ! intensityPhis = 0., 0., 180.
+/  
+  
+!
+! Parameters controlling the Monte Carlo simulation
+! 
+&monteCarlo
+  ! The number of photons per batch in the MC calculation
+  numPhotonsPerBatch = 10000, 
+  ! The number of batches in the MC calculation
+  !   Total number of photons used is numPhotonsPerBatch * numBatches
+  numBatches = 4, 
+  ! Random number seed (used in conjunction with batch number)
+  iseed = 10, 
+  ! Number of equal probability angles to compute in the inverse phase function
+  nPhaseintervals = 10000
+/
+
+!
+! Algorithmic choices, including variance reduction methods 
+!   for intensity calculations
+!
+&algorithms
+  ! Photon tracing (T) or max cross-section (F)? 
+  useRayTracing = T, 
+  ! Use Russian roulette (kill/refresh weak photons)? 
+  useRussianRoulette = T,
+  !
+  ! The remaining parameters apply only to intensity calculations
+  !
+  ! Use Russian roulette to speed up intensity ray tracing calculations? 
+  !   The method is described in  H. Iwabuchi, JAS 2006, Vol 63, pp 2324-2339
+  !   He suggests a value of zetaMin of about 0.3. 
+  !   Setting zetaMin = 0 has the same effect as not using Russian roulette but 
+  !   will be slower. 
+  !
+  useRussianRouletteForIntensity = .false.,  
+  zetaMin = 0., 
+  
+  ! Use hybrid (smoothed) phase function for local estimation of intensity? 
+  !   If .true. and hybridPhaseFunWidth > 0 (but less than 30 degrees)
+  !   intensity calculations (but not photon trajectories) use a phase 
+  !   function that transitions to a Gaussian peak at small scattering 
+  !   angles
+  ! The original phase function can be used for estimates during the first N 
+  !   orders of scattering. 
+  useHybridPhaseFunsForIntenCalcs = .false., 
+  hybridPhaseFunWidth = 0., 
+  numOrdersOrigPhaseFunIntenCalcs = 0, 
+/
+
+&filenames
+  ! Name of a file containing the domain (may be used with other solvers) 
+  domainFileName = "",
+/
+
+! Parameters defining the optical properties 
+!
+&problemOptics
+  ! Single scattering albedo
+  SSA  = 1., 
+  ! Optical depth
+  opticalDepth = 1.,
+  ! Asymmetery factor
+  g = 0.85, 
+  ! Number of Legendre coefficients in the phase function representation
+  !   Used only if useMoments = .true. 
+  nLegendreCoefficients = 64, 
+  ! Number of angle-value pairs at which to compute the phase function
+  !   Used only if useMoments = .false. 
+  nAngles = 5000, 
+  ! Should the phase function be represented as a set of Legendre moments
+  !   or angle-value pairs? 
+  useMoments = T, 
+  ! If the phase function is to be read from a table the name of the file 
+  !    is specified here
+  phaseFunctionTableFile = "", 
+  ! For phase functions read from a table, which entry to use? 
+  !
+  phaseFunctionTableIndex = 0,
+/ 
+
+!
+! The physical description of the domain
+!
+&problemDomain
+  ! The problem is defined in terms of the optical properties (optical depth, 
+  !   single scattering albedo, assymetery parameter) and should be insensitive 
+  !   to the discretization of the physical domain.
+  ! Number of columns into which the domain is divided in the x and y dimensions
+  nX = 1, nY = 1,
+  ! Size of the domain in the horizontal (arbitrary units) 
+  domainSize = 500.,
+  ! Number of layers into which the domain is divided
+  nLayers = 1,
+  ! Physical thickness of the domain (arbitrary units; same as domainSize)
+  physicalThickness = 250.,
+  ! Reflection from a Lambertian surface can be described as a special case 
+  !   inside the integrator or using a surfaceDescription object
+  useSurfaceProperties = F,
+/
