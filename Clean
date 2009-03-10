@@ -1,0 +1,8 @@
+#!/bin/tcsh
+# $Revision: 1.2 $, $Date: 2009/03/09 19:17:21 $
+# $Name: Cornish-Gilliflower $
+
+echo "Cleaning in Code directory"; cd Code; make clean; cd ..
+echo "Cleaning in Integrators directory"; cd Integrators; make clean; cd ..
+echo "Cleaning in Example-Drivers directory"; cd Example-Drivers; make clean; cd ..
+echo "Cleaning in Tools directory"; cd Tools; make clean; cd ..

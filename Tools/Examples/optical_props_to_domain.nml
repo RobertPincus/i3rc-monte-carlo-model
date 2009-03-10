@@ -1,0 +1,15 @@
+! $Revision: 1.2 $, $Date
+! $Name: Cornish-Gilliflower $
+!
+&fileNames
+! Namelist input file for OpticalPropertiesToDomain, which takes
+! optical properties from an SHDOM-like tabulated phase function property file
+! and creates a domain file for use with the I3RC community Monte Carlo 
+! model. 
+!
+! Atmospheric optical properties file name:
+ PropFileName='les_stcu_w213.prp',
+! Output absorption profile file name:
+ outputFileName='les_stcu_w213.dom'
+!
+/
