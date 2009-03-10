@@ -1,6 +1,6 @@
 #!/bin/tcsh
-# $Revision: 1.3 $, $Date: 2009/03/10 13:42:18 $
-# $Name: Cornish-Gilliflower $
+# $Revision$, $Date$
+# $URL$
 
 echo "Building in Code directory"; cd Code; make; cd ..
 echo "Building in Integrators directory"; cd Integrators; make; cd ..
