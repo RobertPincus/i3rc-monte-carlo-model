@@ -4,8 +4,8 @@
 ! NASA has special rights noted in License.txt
 
 PROGRAM MakeMiePhaseFunctionTable
-! $Revision: 1.5 $
-! $Name: Cornish-Gilliflower $
+! $Revision$
+! $URL$
 ! 
 ! Does Mie computations to create an I3RC Monte Carlo phase function table 
 ! as a function of effective radius for gamma or lognormal size distributions

@@ -1,5 +1,5 @@
-# $Revision: 1.8 $, $Date: 2009/03/09 19:17:21 $
-# $Name: Cornish-Gilliflower $
+# $Revision$, $Date$
+# $URL$
 
 ### Instalation directory
 

@@ -3,8 +3,8 @@
 !   GNU public license, V2 : http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 ! NASA has special rights noted in License.txt
 
-! $Revision: 1.9 $, $Date: 2009/03/09 19:17:22 $
-! $Name: Cornish-Gilliflower $
+! $Revision$, $Date$
+! $URL$
 module monteCarloIllumination
   ! Provides an object representing a series of photons. The object specifies the 
   !   initial x, y position and direction. 

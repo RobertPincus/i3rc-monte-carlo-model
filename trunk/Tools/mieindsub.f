@@ -1,5 +1,5 @@
-C $Revision: 1.1 $, $Date: 2006/01/12 21:39:10 $
-C $Name: Cornish-Gilliflower $
+C $Revision$, $Date$
+C $URL$
 
       SUBROUTINE MIE_ONE (WAVELENGTH, MINDEX, RADIUS,
      .                    MAXLEG, EXTINCTION, SCATTER, NLEG, LEGEN)

@@ -1,5 +1,5 @@
-! $Revision: 1.3 $, $Date: 2006/03/02 20:21:21 $
-! $Name: Cornish-Gilliflower $
+! $Revision$, $Date$
+! $URL$
 module kDistributions
   !
   ! This module encapsulates a k-distribution applied to a specified atmosphere to create

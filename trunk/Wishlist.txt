@@ -1,5 +1,5 @@
-$Revision: 1.3 $, $Date: 2009/02/17 18:53:11 $
-$Name: Cornish-Gilliflower $
+$Revision$, $Date$
+$URL$
 
 Here's a list of capabilities we'd like to see added to the I3RC community Monte
 Carlo code. If you implement any of these for your own work we'd love to have 
