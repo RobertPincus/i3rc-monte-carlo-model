@@ -1,0 +1,52 @@
+$Revision: 1.3 $, $Date: 2009/02/17 18:53:11 $
+$Name: Cornish-Gilliflower $
+
+Here's a list of capabilities we'd like to see added to the I3RC community Monte
+Carlo code. If you implement any of these for your own work we'd love to have 
+a copy to distribute. 
+
+*) Code to compute the Legendre coefficients for a phase function that's been
+supplied as a set of angle-value pairs. This would go into
+Code/scatteringPhaseFunctions.f95. We've tried the naive approach (integrating
+the product of each Legendre polynomial and the phase function over mu) but this
+produces very noisy sets of coefficients.
+
+*) A range of surface BRDF objects that conform to the interface used 
+in Code/surfaceProperties.f95. Likely candidates include Cox-Munk for oceans and 
+RPV and/or Li-Sparse-Ross-Thick for vegetated surfaces. Note that we may need to 
+expand the interface in surfaceProperties.f95 to provide the albedo at a given 
+incident angle along with the BRDF. 
+
+*) Polarized radiative transfer. This is ambitious but quite useful to some. It 
+would require, roughly: 
+-) a polarized extension of the phaseFunction and phaseFunctionTable objects in 
+the scatteringPhaseFunctions module
+-) changes to the domain object in the opticalProperties module to reflect the 
+phase matrices
+-) changes to monteCarloRadiativeTransfer: the integrator object needs to tabulate
+phase matrices instead of phase functions; individual photons need be be represented
+by the full Stokes vector instead of a weight; polarization needs to change 
+at each scattering event; polarization needs to be included in the local estimation 
+for radiances; polarized results need to be reported
+-) the driver programs need to report polarized results
+
+*) A proper build system. Can we streamline the specification of
+compilers, compiler flags, libraries, etc. across platforms? Should we
+be using autoconf or something similar? Are we propagating configuration
+information as gracefully as possible into subdirectories? Should we be
+building libraries and linking against those? If so, how do we make the
+module files available?
+
+*) A testing system. In my imagination this looks like a script that runs a series of 
+test cases, and another that compares results and timings between two sets if test cases.
+
+*) More graceful initialization of the domain when using multiple processors in 
+monteCarloDriver. At present, all processors read the domain file, and it would 
+be better if only a single processor read that file and then distributed copies of the 
+domain to all other processors. This would require adding code to opticalProperties, but 
+complicated by the fact that each component of the domain has a unique phaseFuctionTable, 
+and passing these around requires adding code to scatteringPhaseFunctions too. Note that 
+we'd want to go through mulitpleProcess_*mpi.f95. 
+
+Robert Pincus, University of Colorado/NOAA Earth System Research Lab
+Robert.Pincus@colorado.edu

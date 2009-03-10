@@ -1,0 +1,8 @@
+#!/bin/tcsh
+# $Revision: 1.3 $, $Date: 2009/03/10 13:42:18 $
+# $Name: Cornish-Gilliflower $
+
+echo "Building in Code directory"; cd Code; make; cd ..
+echo "Building in Integrators directory"; cd Integrators; make; cd ..
+echo "Building in Example-Drivers directory"; cd Example-Drivers; make; cd ..
+echo "Building in Tools directory"; cd Tools; make; cd ..
