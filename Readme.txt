@@ -1,6 +1,6 @@
 Quick start guide to the I3RC Community Monte Carlo Radiative Transfer Model
-$Revision: 1.11 $, $Date: 2009/03/09 19:17:21 $
-$Name: Cornish-Gilliflower $
+$Revision$, $Date$
+$URL$
 
 This directory contains the I3RC community Monte Carlo model for solving 
 problems in solar radiative transfer in three-dimensionally variable 

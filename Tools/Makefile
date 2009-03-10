@@ -1,5 +1,5 @@
-# $Revision: 1.6 $, $Date: 2009/01/20 15:24:01 $
-# $Name: Cornish-Gilliflower $
+# $Revision$, $Date$
+# $URL$
 include ../Makefile
 Modules += $(ModuleFlag)$(CodeDir)
 

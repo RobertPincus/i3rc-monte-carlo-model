@@ -4,8 +4,8 @@
 ! NASA has special rights noted in License.txt
 
 program ParticleFileToDomain
- ! $Revision: 1.10 $, $Date: 2009/03/09 19:17:22 $
- ! $Name: Cornish-Gilliflower $
+ ! $Revision$, $Date$
+ ! $URL$
  !
  ! Reads an ASCII file describing the three-dimensional distribution
  !   of clouds and/or aerosols and writes the description to a

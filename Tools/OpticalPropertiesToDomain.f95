@@ -4,8 +4,9 @@
 ! NASA has special rights noted in License.txt
 
 program opticalPropertiesToDomain
- ! $Revision: 1.5 $, $Date: 2009/03/09 19:17:22 $
- ! $Name: Cornish-Gilliflower $
+ ! $Revision$, $Date$
+ ! $URL$
+ 
  ! This program converts optical properties from an SHDOM-like ascii file
  ! to an I3RC Monte Carlo optical property domain object, and writes this
  ! object to a file.  The ascii input file of optical properties is almost

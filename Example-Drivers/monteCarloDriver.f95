@@ -4,8 +4,8 @@
 ! NASA has special rights noted in License.txt
 
 program monteCarloDriver
-  ! $Revision: 1.17 $, $Date: 2009/03/09 19:17:22 $
-  ! $Name: Cornish-Gilliflower $
+  ! $Revision$, $Date$
+  ! $URL$
 
   ! Monte Carlo radiative transfer program that computes top and bottom
   ! of domain pixel level outgoing fluxes, domain average absorption

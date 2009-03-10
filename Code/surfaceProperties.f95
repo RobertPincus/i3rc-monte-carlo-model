@@ -3,8 +3,8 @@
 !   GNU public license, V2 : http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 ! NASA has special rights noted in License.txt
 
-! $Revision: 1.5 $, $Date: 2009/03/09 19:17:22 $
-! $Name: Cornish-Gilliflower $
+! $Revision$, $Date$
+! $URL$
   ! This module represent surface  models in which the reflectance 
   !   (the "bi-directional reflectance distribution function," or BRDF) can be modeled with
   !    just a few parameters. These parameters can vary with horizontal position.

@@ -1,5 +1,5 @@
-# $Revision: 1.12 $, $Date: 2006/07/18 22:21:22 $
-# $Name: Cornish-Gilliflower $
+# $Revision$, $Date$
+# $URL$
 # ------------------------------------------------------------------
 # Programs for creating domain files for the I3RC test cases
 # Run the radiative transfer using the driver in Example-Drivers

@@ -3,8 +3,8 @@
 !   GNU public license, V2 : http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 ! NASA has special rights noted in License.txt
 
-! $Revision: 1.14 $, $Date: 2009/03/09 19:17:22 $
-! $Name: Cornish-Gilliflower $
+! $Revision$, $Date$
+! $URL$
 ! --------------------------------------------
 module opticalProperties
   ! Provide a representation of the three dimensional optical properties 

@@ -4,8 +4,8 @@
 ! NASA has special rights noted in License.txt
 
 program computePlaneParallelRT
-  ! $Revision: 1.7 $, $Date: 2009/03/09 19:17:22 $
-  ! $Name: Cornish-Gilliflower $
+  ! $Revision$, $Date$
+  ! $URL$
   !
   ! Program to compute flux, absorption, and intensity for a 
   !   plane parallel slab  

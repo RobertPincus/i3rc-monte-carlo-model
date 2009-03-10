@@ -3,8 +3,8 @@
 !   GNU public license, V2 : http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 ! NASA has special rights noted in License.txt
 
-! $Revision: 1.7 $, $Date: 2009/03/09 19:15:53 $
-! $Name: Cornish-Gilliflower $
+! $Revision$, $Date$
+! $URL$
 module numericUtilities
   implicit none
   private 

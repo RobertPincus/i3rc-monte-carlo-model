@@ -1,5 +1,5 @@
-#! $Revision: 1.12 $, $Date: 2009/02/13 22:58:31 $
-#! $Name: Cornish-Gilliflower $
+#! $Revision$, $Date$
+#! $URL$
 
 include ../Makefile
 
