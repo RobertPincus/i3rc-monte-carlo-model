@@ -1,10 +1,6 @@
 #summary If you use this code please let us know.
 
-= Introduction =
-
-More users = more support from NASA for this code. Please let us know if you use it in your work by signing up on the I3RC web site (http://i3rc.gsfc.nasa.gov/I3RC_community_model.htm). 
-
-= Details =
+More users means more support from agencies (NASA, DOE)  for this project. Please let us know if you use this code in your work by signing up on the I3RC web site (http://i3rc.gsfc.nasa.gov/I3RC_community_model.htm). 
 
 If you publish results obtained with this code, please refer to it as the _I3RC 
 Community Monte Carlo model_ and reference the I3RC overview paper by Bob 
