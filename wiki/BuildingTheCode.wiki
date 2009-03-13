@@ -1,4 +1,4 @@
-#summary Notes on compilation and linkin
+#summary Notes on compilation and linking
 
 (This information is repeated in Readme.txt in the root directory.) 
 
