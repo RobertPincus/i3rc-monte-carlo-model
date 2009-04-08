@@ -169,7 +169,7 @@ contains
     
     integer, parameter :: numTestSteps = 1801  
     integer            :: i 
-    real, dimension(numTestSteps + 1) &
+    real, dimension(numTestSteps) &
                        :: testAngles, testValues
     ! ------------------------
     ! Initialization - Legendre moments supplied
@@ -209,12 +209,12 @@ contains
       ! Sanity check - expand the phase function using numTestSteps and see if there are any 
       !   negative values
       !
-      testAngles(:) = (/ (i, i = 0, numTestSteps) /) / real(numTestSteps - 1) * Pi
+      testAngles(:) = (/ (i, i = 0, numTestSteps - 1) /) / real(numTestSteps - 1) * Pi
       call getPhaseFunctionValues(newPhaseFunction, testAngles, testValues, status)
       if(any(testValues(:) < 0.)) then 
         call setStateToWarning(status, &
-                               "newPhaseFunction: Phase function coefficients give "       // &
-                               trim(IntToChar(count(testValues(:) < 0.)/numTestSteps + 1)) // &
+                               "newPhaseFunction: Phase function coefficients give "           // &
+                               trim(IntToChar((100 * count(testValues(:) < 0.))/numTestSteps)) // &
                                "% negative phase function values" )
       else
         call setStateToSuccess(status)
