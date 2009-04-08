@@ -229,8 +229,8 @@ PROGRAM MakeMiePhaseFunctionTable
                                           extinction=Extinct(i), &
                                           singleScatteringAlbedo=SSalb(i), &
                                           status=status)
-    CALL printStatus(status)
   ENDDO
+  CALL printStatus(status)
   
    ! Make the phase function table object, labeled with effective radius
    ! Provide a description of how the table was created. 
