@@ -911,8 +911,12 @@ contains
       ncStatus = nf90_EndDef(ncFileId)
       call add_PhaseFunctionTable(table, ncFileId, status = status)
       ncStatus = nf90_close(ncFileId)
-      if(ncStatus /= nf90_NoErr) &
-        call setStateToFailure(status, "add_PhaseFunctionTable: " // trim(nf90_StrError(ncStatus)))
+      if(ncStatus /= nf90_NoErr) then
+        call setStateToFailure(status, "write_PhaseFunctionTable: " // trim(nf90_StrError(ncStatus)))
+        ncstatus = nf90_close(ncFileId) 
+        open(20, file = trim(fileName))
+        close(20, status = "delete")
+      end if   
     else
       call setStateToFailure(status, "write_PhaseFunctionTable: can't create file " // trim(fileName)) 
     end if 
@@ -956,6 +960,7 @@ contains
     
 
     ! ------------------------
+    ncStatus(:) = nf90_NoErr
     thisPrefix = ""
     if(present(prefix)) thisPrefix = prefix
     ncFileId = fileId
@@ -1078,7 +1083,7 @@ contains
         ncStatus( 4) = nf90_put_var(ncFileId,         angleVarId, table%phaseFunctions(1)%scatteringAngle) 
         ncStatus( 5) = nf90_put_var(ncFileId, phaseFunctionVarId, phaseFunctionArray) 
         deallocate(phaseFunctionArray)
-      else if (all( (/ (storedAsLegendre(table%phaseFunctions(i)), i = 1, nEntries) /) ) ) then
+      else 
         !
         ! Copy all the Legendre coefficients into one long array
         !
