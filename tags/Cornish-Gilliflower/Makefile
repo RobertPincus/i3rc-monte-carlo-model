@@ -3,7 +3,7 @@
 
 ### Instalation directory
 
-I3RC_Home = /Users/robert/Codes/I3RC
+I3RC_Home = /Users/robert/Codes/I3RC-Monte-Carlo-Model-Cornish-Gilliflower
 CodeDir    = $(I3RC_Home)/Code
 IntegDir   = $(I3RC_Home)/Integrators
  

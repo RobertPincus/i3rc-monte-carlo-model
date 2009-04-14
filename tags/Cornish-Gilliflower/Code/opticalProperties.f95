@@ -678,6 +678,15 @@ contains
             if(ncStatus(j) /= nf90_NoErr) &
               call setStateToFailure(status, "write_Domain: " // trim(nf90_StrError(ncStatus(j))))
           end do
+          if(stateIsFailure(status)) then 
+            !
+            ! File write has failed somehow - delete file and exit
+            ! 
+            ncstatus(1) = nf90_close(ncFileId) 
+            open(20, file = trim(fileName))
+            close(20, status = "delete")
+            exit
+          end if
         end do
       end if
       ncStatus(1) = nf90_close(ncFileId)
