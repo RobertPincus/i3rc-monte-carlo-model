@@ -43,6 +43,7 @@ endif
 
 #### Compiler-specific entries (may override marcos above) 
 
+# Macros are available for ifort, g95, xlf, absoft
 compiler=ifort
 debug=no
 
@@ -95,6 +96,25 @@ ifeq ($(compiler),xlf)
     # Debugging flags
     F95Flags = -g -O2 -C -qlanglvl=95std -qmaxmem=-1  $(Modules)
     FFLAGS   = -g                      
+  endif
+endif
+
+ifeq ($(compiler),absoft)
+  #
+  # absoft fortran 
+  #
+  F95        = f95
+  F77        = f77
+  ModuleFlag = -p
+  Libs      += -lU77
+  ifeq ($(debug),no) 
+    # Optimization flags. 
+    F95Flags = -O3  -stack_size 0x10000000 -cpu:host $(Modules)  
+    FFlags   = -O3  -stack_size 0x10000000 -cpu:host 
+  else 
+    ##Debugging flags
+    F95Flags = -g $(Modules) 
+    FFLAGS   = -g 
   endif
 endif
 
