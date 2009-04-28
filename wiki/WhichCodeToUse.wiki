@@ -12,4 +12,4 @@ The [http://www.cdc.noaa.gov/people/robert.pincus/Papers/3DRT-Models/ technical 
 
 If you want to use Monte Carlo methods there are a couple of choices in addition to this code. We know of 
   * [http://www.geocities.jp/null2unity/mcarats/ MCARATS] by Hiro Iwabuchi
-  * MC-UNIK and Grimaldi [http://www.ifm-geomar.de/index.php?id=981] by Andreas Macke and colleagues
+  * [http://www.ifm-geomar.de/index.php?id=981 MC-UNIK and Grimaldi] by Andreas Macke and colleagues
