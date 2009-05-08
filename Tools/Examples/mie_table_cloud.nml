@@ -1,5 +1,5 @@
-! $Revision: 1.4 $, $Date
-! $Name: Cornish-Gilliflower $
+! $Revision: 6 $, $Date: 2009-03-10 16:13:07 -0400 (Tue, 10 Mar 2009) $
+! $URL: https://i3rc-monte-carlo-model.googlecode.com/svn/trunk/Tools/OpticalPropertiesToDomain.f95 $
 !
 &mie_table_input
 ! Namelist input file for MakeMieTable, which makes I3RC Monte Carlo
