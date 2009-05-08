@@ -1,5 +1,6 @@
-! $Revision: 1.1 $, $Date: 2006/01/18 00:10:05 $
-! $Name: Cornish-Gilliflower $
+! $Revision: 6 $, $Date: 2009-03-10 16:13:07 -0400 (Tue, 10 Mar 2009) $
+! $URL: https://i3rc-monte-carlo-model.googlecode.com/svn/trunk/Tools/OpticalPropertiesToDomain.f95 $
+
 ! Namelist input file for PhysicalPropertiesToDomain, which 
 ! creates a domain file given ASCII input files descirbing the 
 ! particle properties of mass content and effective radius for several 

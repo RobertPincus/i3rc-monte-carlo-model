@@ -1,5 +1,5 @@
-! $Revision: 1.3 $, $Date
-! $Name: Cornish-Gilliflower $
+! $Revision: 6 $, $Date: 2009-03-10 16:13:07 -0400 (Tue, 10 Mar 2009) $
+! $URL: https://i3rc-monte-carlo-model.googlecode.com/svn/trunk/Tools/OpticalPropertiesToDomain.f95 $
 !
  &mie_table_input
 ! Namelist input file for MakeMieTable, which makes I3RC Monte Carlo
@@ -15,8 +15,8 @@
 ! Planck function weighting.
 !
 ! Starting and ending wavelength (microns) of band (wavelen1<=wavelen2):
- WAVELEN1=2.13, 
- WAVELEN2=2.13,
+ WAVELEN1=0.675, 
+ WAVELEN2=0.675,
 ! 
 ! Average properties over wavelength (A) or use Planck weighted index
 !  of refraction at center wavelength (C).  Averaging is more accurate,
@@ -52,6 +52,6 @@
  MAXRADIUS=15.,
 !
 ! Output Mie scattering table file name:
- phaseFunctionTableFile='dust_w2.13_mie.phasetab'
+ phaseFunctionTableFile='dust_w0.67_mie.phasetab'
 !
 /
