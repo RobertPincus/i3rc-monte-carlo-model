@@ -560,7 +560,7 @@ contains
                                               randomNumbers, scatteringOrder, &
                                               contributions, xIndexF(:), yIndexF(:))              
             forall(i = 1:numIntensityDirections)
-              thisIntegrator%intensity(xIndexF(i), yIndexF(:), i) =  &
+              thisIntegrator%intensity(xIndexF(i), yIndexF(i), i) =  &
                 thisIntegrator%intensity(xIndexF(i), yIndexF(i), i) + contributions(i)
               thisIntegrator%intensityByComponent(xIndexF(i), yIndexF(i), i, 0) = &
                 thisIntegrator%intensityByComponent(xIndexF(i), yIndexF(i), i, 0) + contributions(i)

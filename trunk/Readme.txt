@@ -21,11 +21,15 @@ solver, and can save problem domain to a file.
 
 *** Credit where credit is due
 
+If you use this code in your research or teaching please sign up at the I3RC web site 
+(http://i3rc.gsfc.nasa.gov/I3RC_community_model.htm). We won't use your personal information in 
+any way - we use the numbers to argue for support from agencies and to notify users about new releases 
+of the code. 
+
 If you publish results obtained with this code, please refer to it as the I3RC 
 Community Monte Carlo model and reference the I3RC overview paper by Bob 
 Cahalan (http://dx.doi.org://10.1175/BAMS-86-9-1275) and the paper by 
-Robert Pincus and Frank Evans (submitted to J. Atmos. Sci in March 2009; 
-current status available from http://www.psd.esrl.noaa.gov/people/robert.pincus/Papers/3DRT-Models/). 
+Robert Pincus and Frank Evans (http://dx.doi.org/10.1175/2009JAS3137.1). 
 
 *** Quick start: An example
 
