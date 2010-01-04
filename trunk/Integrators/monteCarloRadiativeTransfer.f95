@@ -268,7 +268,7 @@ contains
     integer :: numIntensityDirections, numX, numY, numZ, numComponents, j, k, d
     real, dimension(:, :), allocatable &
             :: numPhotonsPerColumn
-            
+
     ! Sanity checks
     if(.not. isReady_integrator(thisIntegrator)) then
       call setStateToFailure(status, "computeRadiativeTransfer: problem not completely specified.")
@@ -2042,7 +2042,7 @@ contains
     
     sinTheta = sqrt(1. - mu**2)
     cosPhi   = cos(Phi) 
-    sinPhi   = sqrt(1. - cosPhi**2)
+    sinPhi   = sin(Phi) ! sqrt(1 - cosPhi) is ambiguous at 90, 270 degrees. 
     makeDirectionCosines(:) = (/ sinTheta * cosPhi, sinTheta * sinPhi, mu /)
   end function makeDirectionCosines
   !------------------------------------------------------------------------------------------
