@@ -54,10 +54,10 @@ files that describe the 3D distribution of optical properties within a domain.
 Typically one would first build one or more phase function tables describing the
 single scattering properties of clouds, aerols, etc. using MakeMieTable. We've
 provided example namelists for clouds and aerosol, though you may want to tweak
-these. Program PhysicalPropertiesToDomain reads an ASCII description of the 3D
+these. Program [http://code.google.com/p/i3rc-monte-carlo-model/source/browse/trunk/Tools/PhysicalPropertiesToDomain.f95 PhysicalPropertiesToDomain] reads an ASCII description of the 3D
 liquid water content field, combines it with a phase function table, and creates
 the final domain. Alternatively, you can use the program
-OpticalPropertiesToDomain to convert files similar to those used by SHDOM to the
+[http://code.google.com/p/i3rc-monte-carlo-model/source/browse/trunk/Tools/OpticalPropertiesToDomain.f95 OpticalPropertiesToDomain]  to convert files similar to those used by [http://nit.colorado.edu/shdom.html SHDOM] to the
 internal format. ASCII file formats are described in the example programs. The
 domain files can then used as input to the program
 Example-Drivers/monteCarloDriver. 
