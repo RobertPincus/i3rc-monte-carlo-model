@@ -22,7 +22,9 @@ Compile.F95 = $(F95) $(F95Flags) -c
 Compile.F77 = $(F77) $(FFlags)   -c
 Link.F95    = $(F95) $(F95Flags) 
 
-### MPI-specific entries, if any 
+### MPI-specific entries, if any, for use with a specific compiler
+### If your environment supports it, you can specify the mpif90 wraper as the 
+###    compiler and specify the compiler-specific flags
 #
 # Set UseMPI to "yes" and specify the appropriate values for the 
 #   MPI_Dir, MPI_IncludeDir, and MPI_LibDir directories to enable 
@@ -43,8 +45,8 @@ endif
 
 #### Compiler-specific entries (may override marcos above) 
 
-# Macros are available for ifort, g95, xlf, absoft
-compiler=ifort
+# Macros are available for ifort, g95, xlf, absoft, mpif90
+compiler=mpif90
 debug=no
 
 ifeq ($(compiler),ifort)
@@ -115,6 +117,25 @@ ifeq ($(compiler),absoft)
     ##Debugging flags
     F95Flags = -g $(Modules) 
     FFLAGS   = -g 
+  endif
+endif
+
+ifeq ($(compiler),mpif90)
+  #
+  # mpif90 wrapper - compiler-specific flags need to be specified by hand  
+  #
+  F95         = mpif90
+  F77         = mpif77
+  Compile.F95 += -free -Tf
+  multipleProcCode = multipleProcesses_mpi.o
+  ifeq ($(debug),no) 
+    # Optimization flags. 
+    F95Flags = -O3 -heap-arrays -diag-disable vec -ipo $(Modules) 
+    FFlags   = -fast 
+  else
+    # Debugging flags
+    F95Flags = -g -O2 -heap-arrays -C -traceback -diag-disable vec $(Modules) 
+    FFLAGS   = -g -O2 -heap-arrays -C -traceback -diag-disable vec 
   endif
 endif
 

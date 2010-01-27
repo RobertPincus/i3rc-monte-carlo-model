@@ -20,6 +20,7 @@
 module surfaceProperties
   use ErrorMessages
   use numericUtilities
+  use multipleProcesses
   implicit none
   private
   !------------------------------------------------------------------------------------------
@@ -49,7 +50,7 @@ module surfaceProperties
   !------------------------------------------------------------------------------------------
   public :: surfaceDescription
   public :: new_SurfaceDescription, copy_surfaceDescription, finalize_SurfaceDescription, &
-            isReady_surfaceDescription, &
+            isReady_surfaceDescription, broadcast_surfaceDescription, &
             computeSurfaceReflectance
 contains  
   !------------------------------------------------------------------------------------------
@@ -203,7 +204,31 @@ contains
 
   end subroutine finalize_surfaceDescription
   !------------------------------------------------------------------------------------------
-
+  !   Broadcasting to multiple processors
+  !------------------------------------------------------------------------------------------
+  subroutine broadcast_surfaceDescription(thisSurface) 
+    type(surfaceDescription), intent(inout) :: thisSurface
+    
+    integer :: numX, numY
+    integer, dimension(2) :: msg
+    
+    if(MasterProc) then 
+      numX = size(thisSurface%xPosition) 
+      numY = size(thisSurface%yPosition) 
+    else
+      call finalize_surfaceDescription(thisSurface)
+    end if 
+    
+    msg = (/ numX, numY /) 
+    call broadcastToAllProcesses(msg)
+    if(.not. MasterProc) &
+      allocate(thisSurface%xPosition(msg(1)), thisSurface%yPosition(msg(2)), &
+               thisSurface%BRDFParameters(numberOfParameters, msg(1) - 1, msg(2) - 1))
+    
+    call broadcastToAllProcesses(thisSurface%xPosition)
+    call broadcastToAllProcesses(thisSurface%yPosition)
+    call broadcastToAllProcesses(thisSurface%BRDFParameters)
+  end subroutine broadcast_surfaceDescription
   !------------------------------------------------------------------------------------------
   ! Utility procedures private to the module 
   !------------------------------------------------------------------------------------------

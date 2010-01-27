@@ -126,88 +126,130 @@ program monteCarloDriver
   ! Start communications among multiple processes.
   ! 
   call initializeProcesses(numProcs, thisProc)
+  call cpu_time(cpuTime0)
 
   ! -----------------------------------------
   ! Get the input variables from the namelist file
   !
-  call cpu_time(cpuTime0)
-  namelistFileName = getOneArgument()
-  open (unit = 1, file = trim(namelistFileName), status='OLD')
-  read (1, nml = radiativeTransfer); rewind(1)
-  read (1, nml = monteCarlo);        rewind(1)
-  read (1, nml = algorithms);        rewind(1)
-  read (1, nml = output);            rewind(1)
-  read (1, nml = fileNames)
-  close (1)
-  numRadDir = count(abs(intensityMus(:)) > 0.) 
-  computeIntensity = numRadDir > 0 .and. &
-                     (len_trim(outputRadFile) > 0 .or. len_trim(outputNetcdfFile) > 0)
-  if(.not. computeIntensity) outputRadFile = ""
-
-  ! -----------------------------------------
-  !  Read the domain file
+  !   If using more than one processor read the problem only on one, then distribute 
+  !   the integrator and the (few) required variables among processors
   !
-  call read_Domain(domainFileName, thisDomain, status)
-  call printStatus(status)
-  call getInfo_Domain(thisDomain, numX = nx, numY = ny, numZ = nZ, status = status) 
-  allocate(xPosition(nx+1), yPosition(ny+1), zPosition(nz+1))
-  call getInfo_Domain(thisDomain,                                   &
-                      xPosition = xPosition, yPosition = yPosition, &
-                      zPosition = zPosition, status = status) 
+  if(MasterProc) then 
+    namelistFileName = getOneArgument()
+    open (unit = 1, file = trim(namelistFileName), status='OLD')
+    read (1, nml = radiativeTransfer); rewind(1)
+    read (1, nml = monteCarlo);        rewind(1)
+    read (1, nml = algorithms);        rewind(1)
+    read (1, nml = output);            rewind(1)
+    read (1, nml = fileNames)
+    close (1)
+    numRadDir = count(abs(intensityMus(:)) > 0.) 
+    computeIntensity = numRadDir > 0 .and. &
+                       (len_trim(outputRadFile) > 0 .or. len_trim(outputNetcdfFile) > 0)
+    if(.not. computeIntensity) outputRadFile = ""
 
-  ! Set up the integrator object - the integrator makes copies of the 
-  !   3D distribution of optical properties, so we can release the resources
-  mcIntegrator = new_Integrator(thisDomain, status = status)
-  call printStatus(status)
-  call finalize_Domain(thisDomain)
-
-   ! Set the surface albedo, table sizes, and maybe the radiance directions
-  call specifyParameters (mcIntegrator,                          &
-                          surfaceAlbedo = surfaceAlbedo,         &
-                          minInverseTableSize = nPhaseIntervals, &
-                          status = status)
-  call printStatus(status) 
-
-  if (computeIntensity) then
-    call specifyParameters (mcIntegrator, &
-                            minForwardTableSize=nPhaseIntervals, &
-                            intensityMus=intensityMus(1:numRadDir), &
-                            intensityPhis=intensityPhis(1:numRadDir), &
-                            computeIntensity=computeIntensity, status=status)
+    ! -----------------------------------------
+    ! Read the domain file 
+    call read_Domain(domainFileName, thisDomain, status)
+    call printStatus(status)
+    call getInfo_Domain(thisDomain, numX = nx, numY = ny, numZ = nZ, status = status) 
+    allocate(xPosition(nx+1), yPosition(ny+1), zPosition(nz+1))
+    call getInfo_Domain(thisDomain,                                   &
+                        xPosition = xPosition, yPosition = yPosition, &
+                        zPosition = zPosition, status = status) 
+  
+    ! Set up the integrator object - the integrator makes copies of the 
+    !   3D distribution of optical properties, so we can release the resources
+    mcIntegrator = new_Integrator(thisDomain, status = status)
+    call printStatus(status)
+    call finalize_Domain(thisDomain)
+  
+     ! Set the surface albedo, table sizes, and maybe the radiance directions
+    call specifyParameters (mcIntegrator,                          &
+                            surfaceAlbedo = surfaceAlbedo,         &
+                            minInverseTableSize = nPhaseIntervals, &
+                            status = status)
     call printStatus(status) 
-  endif
+  
+    if (computeIntensity) then
+      call specifyParameters (mcIntegrator, &
+                              minForwardTableSize=nPhaseIntervals, &
+                              intensityMus=intensityMus(1:numRadDir), &
+                              intensityPhis=intensityPhis(1:numRadDir), &
+                              computeIntensity=computeIntensity, status=status)
+      call printStatus(status) 
+    endif
+  
+    !
+    ! Make the algorithmic choices
+    !
+    call specifyParameters(mcIntegrator,                              &
+                           useRayTracing      = useRayTracing,        &
+                           useRussianRoulette = useRussianRoulette,   &
+                           status = status)
+    call printStatus(status) 
+    
+    !
+    ! Algorithmic choices for intensity calculations
+    !
+    if (computeIntensity) then
+      call specifyParameters(mcIntegrator,                            &
+                           useHybridPhaseFunsForIntenCalcs =          &
+                                   useHybridPhaseFunsForIntenCalcs,   &
+                           hybridPhaseFunWidth = hybridPhaseFunWidth, &
+                           numOrdersOrigPhaseFunIntenCalcs =          &
+                                   numOrdersOrigPhaseFunIntenCalcs,   &
+                           useRussianRouletteForIntensity =           &
+                                   useRussianRouletteForIntensity,    &
+                           zetaMin = zetaMin,                         &
+                           limitIntensityContributions =              &
+                                     limitIntensityContributions,     &
+                           maxIntensityContribution =                 &
+                                     maxIntensityContribution,        &
+                           status = status)
+      call printStatus(status) 
+    end if
+  
+    ! --------------------------------------------------------------------------
+    ! Compute radiative transfer with a trivial number of photons. 
+    !   This checks to see if the integrator is properly set up before 
+    !   running all the batches, and also allows the integrator to 
+    !   do any internal pre-computation. 
+  
+    ! Seed the random number generator.
+    randoms = new_RandomNumberSequence(seed = (/ iseed, 0 /) )
+  
+     ! The initial direction and position of the photons are precomputed and 
+     !   stored in an "illumination" object. 
+    incomingPhotons = new_PhotonStream (solarMu, solarAzimuth, &
+                                        numberOfPhotons = 1,   &
+                                        randomNumbers = randoms, status=status)
+    call printStatus(status)
+  
+    ! Now we compute the radiative transfer for a single photon 
+    !   This gets the integrator to do all the set-up calculations
+    !
+    if(.not. isReady_Integrator (mcIntegrator)) stop 'Integrator is not ready.'
+    call computeRadiativeTransfer (mcIntegrator, randoms, incomingPhotons, status)
+    call printStatus(status) 
+    call finalize_PhotonStream (incomingPhotons)
 
-  !
-  ! Make the algorithmic choices
-  !
-  call specifyParameters(mcIntegrator,                              &
-                         useRayTracing      = useRayTracing,        &
-                         useRussianRoulette = useRussianRoulette,   &
-                         status = status)
-  call printStatus(status) 
+  end if ! End of using only root processor
   
   !
-  ! Algorithmic choices for intensity calculations
+  ! Distribute the problem among all processors if using more than one
+  !   It might be better to bundle the six integers into a vector
   !
-  if (computeIntensity) then
-    call specifyParameters(mcIntegrator,                            &
-                         useHybridPhaseFunsForIntenCalcs =          &
-                                 useHybridPhaseFunsForIntenCalcs,   &
-                         hybridPhaseFunWidth = hybridPhaseFunWidth, &
-                         numOrdersOrigPhaseFunIntenCalcs =          &
-                                 numOrdersOrigPhaseFunIntenCalcs,   &
-                         useRussianRouletteForIntensity =           &
-                                 useRussianRouletteForIntensity,    &
-                         zetaMin = zetaMin,                         &
-                         limitIntensityContributions =              &
-                                   limitIntensityContributions,     &
-                         maxIntensityContribution =                 &
-                                   maxIntensityContribution,        &
-                         status = status)
-    call printStatus(status) 
-  end if
+  call broadcastToAllProcesses(nX)
+  call broadcastToAllProcesses(nY)
+  call broadcastToAllProcesses(nZ)
+  call broadcastToAllProcesses(numBatches)
+  call broadcastToAllProcesses(iseed)
+  call broadcastToAllProcesses(numRadDir)
+  call broadcast_Integrator(mcIntegrator)
 
-   ! Allocate and zero the arrays for radiative quantities and moments 
+  ! Allocate and zero the arrays for radiative quantities and moments 
+  !
   allocate (fluxUp      (nX, nY), fluxUpStats      (nX, nY, 2))
   allocate (fluxDown    (nX, nY), fluxDownStats    (nX, nY, 2))
   allocate (fluxAbsorbed(nX, nY), fluxAbsorbedStats(nX, nY, 2))
@@ -220,28 +262,6 @@ program monteCarloDriver
     allocate (Radiance(nX, nY, numRadDir), RadianceStats(nX, nY, numRadDir, 2))
     RadianceStats(:, :, :, :) = 0.0
   endif  
-
-  ! --------------------------------------------------------------------------
-  ! Compute radiative transfer with a trivial number of photons. 
-  !   This checks to see if the integrator is properly set up before 
-  !   running all the batches, and also allows the integrator to 
-  !   do any internal pre-computation. 
-
-  ! Seed the random number generator.
-  randoms = new_RandomNumberSequence(seed = (/ iseed, 0 /) )
-
-   ! The initial direction and position of the photons are precomputed and 
-   !   stored in an "illumination" object. 
-  incomingPhotons = new_PhotonStream (solarMu, solarAzimuth, &
-                                      numberOfPhotons = 1,   &
-                                      randomNumbers = randoms, status=status)
-  call printStatus(status)
-
-  ! Now we compute the radiative transfer for a single photon 
-  if(.not. isReady_Integrator (mcIntegrator)) stop 'Integrator is not ready.'
-  call computeRadiativeTransfer (mcIntegrator, randoms, incomingPhotons, status)
-  call printStatus(status) 
-  call finalize_PhotonStream (incomingPhotons)
 
   call cpu_time(cpuTime1)
   call synchronizeProcesses
