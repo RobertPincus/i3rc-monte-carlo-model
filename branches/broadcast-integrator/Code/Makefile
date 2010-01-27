@@ -27,7 +27,7 @@ kDistribution.o: kDistribution.f95 ErrorMessages.o
 
 monteCarloIllumination.o: monteCarloIllumination.f95 ErrorMessages.o RandomNumbersForMC.o
 
-surfaceProperties.o: surfaceProperties.f95 ErrorMessages.o numericUtilities.o
+surfaceProperties.o: surfaceProperties.f95 ErrorMessages.o numericUtilities.o $(multipleProcCode)
 
 scatteringPhaseFunctions.o: scatteringPhaseFunctions.f95 ErrorMessages.o numericUtilities.o characterUtils.o
 

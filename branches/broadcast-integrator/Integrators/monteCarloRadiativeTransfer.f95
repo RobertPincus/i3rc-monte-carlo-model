@@ -15,6 +15,7 @@ module monteCarloRadiativeTransfer
   use opticalProperties
   use surfaceProperties
   use monteCarloIllumination
+  use multipleProcesses
   implicit none
   private
   
@@ -140,7 +141,7 @@ module monteCarloRadiativeTransfer
   ! What is visible? 
   !------------------------------------------------------------------------------------------
   public :: integrator
-  public :: new_Integrator, copy_Integrator, isReady_Integrator, finalize_Integrator, &
+  public :: new_Integrator, copy_Integrator, isReady_Integrator, finalize_Integrator, broadcast_Integrator, &
             specifyParameters, computeRadiativeTransfer, reportResults
 contains
   !------------------------------------------------------------------------------------------
@@ -2117,4 +2118,179 @@ contains
     if(associated(thisMatrix%values)) deallocate(thisMatrix%values)
   end subroutine finalize_Matrix
   !------------------------------------------------------------------------------------------
+  subroutine broadcast_Integrator(thisIntegrator) 
+    !
+    ! Send a stripped-down copy of the integrator to all processes 
+    !   We don't send the original phase function tables (too complicated) 
+    !   so the integrator that's recieved can't re-compute tabulated phase functions
+    ! Maybe it's possible to define a derived type to use with MPI, but I can't figure 
+    !   out how that will work will all the pointer/allocatable arrays
+    !
+    type(integrator), intent(inout) :: thisIntegrator
+    
+    integer :: numX, numY, numZ, numComponents, numIntensityDirections, i
+    logical, dimension(10) :: flags 
+    integer, dimension( 3) :: intMsg
+    real,    dimension(11) :: realMsg
+    
+    real, allocatable, dimension(:, :) :: tempArray
+    
+    !
+    ! We're going to replace whatever is in place with the results from the master process
+    !
+    if(.not. MasterProc) call finalize_Integrator(thisIntegrator)
+    
+    ! 
+    ! Collect scalars into vectors to minimize communication
+    !
+    if(MasterProc) &
+      flags = (/ thisIntegrator%readyToCompute,     &
+                 thisIntegrator%computeIntensity,   &
+                 thisIntegrator%useRayTracing,      &
+                 thisIntegrator%useRussianRoulette, & 
+                 thisIntegrator%xyRegularlySpaced,  &
+                 thisIntegrator%zRegularlySpaced,   &
+                 thisIntegrator%useSurfaceBDRF,     &
+                 thisIntegrator%useHybridPhaseFunsForIntenCalcs, &
+                 thisIntegrator%useRussianRouletteForIntensity,  &
+                 thisIntegrator%limitIntensityContributions /) 
+    call broadcastToAllProcesses(flags) 
+    if(.not. MasterProc) then 
+      thisIntegrator%readyToCompute   = flags(1) 
+      thisIntegrator%computeIntensity = flags(2)
+      thisIntegrator%useRayTracing    = flags(3)
+      thisIntegrator%useRussianRoulette = flags(4) 
+      thisIntegrator%xyRegularlySpaced  = flags(5) 
+      thisIntegrator%zRegularlySpaced   = flags(6) 
+      thisIntegrator%useSurfaceBDRF     = flags(7)
+      thisIntegrator%useHybridPhaseFunsForIntenCalcs = flags(8)
+      thisIntegrator%useRussianRouletteForIntensity  = flags(9)
+      thisIntegrator%limitIntensityContributions     = flags(10)
+    end if 
+    
+    if(MasterProc) &
+      intMsg  = (/ thisIntegrator%minForwardTableSize, &
+                   thisIntegrator%minInverseTableSize, &
+                   thisIntegrator%numOrdersOrigPhaseFunIntenCalcs /) 
+    call broadcastToAllProcesses(intMsg) 
+    if(.not. MasterProc) then 
+      thisIntegrator%minForwardTableSize =  intMsg(1)
+      thisIntegrator%minInverseTableSize =  intMsg(2) 
+      thisIntegrator%numOrdersOrigPhaseFunIntenCalcs =  intMsg(3)
+    end if 
+    
+    if(MasterProc) &
+      realMsg = (/ thisIntegrator%RussianRouletteW,   &
+                   thisIntegrator%surfaceAlbedo,      &
+                   thisIntegrator%deltaX, thisIntegrator%deltaY, thisIntegrator%deltaZ, &
+                   thisIntegrator%x0,     thisIntegrator%y0,     thisIntegrator%z0, & 
+                   thisIntegrator%hybridPhaseFunWidth, &
+                   thisIntegrator%zetaMin,             &
+                   thisIntegrator%maxIntensityContribution /) 
+    call broadcastToAllProcesses(realMsg) 
+    if(.not. MasterProc) then 
+      thisIntegrator%RussianRouletteW = realMsg(1) 
+      thisIntegrator%surfaceAlbedo    = realMsg(2) 
+      thisIntegrator%deltaX = realMsg(3); thisIntegrator%deltaY = realMsg(4); thisIntegrator%deltaZ = realMsg(5) 
+      thisIntegrator%x0     = realMsg(6); thisIntegrator%y0     = realMsg(7); thisIntegrator%z0     = realMsg(8) 
+      thisIntegrator%hybridPhaseFunWidth      = realMsg(9)
+      thisIntegrator%zetaMin                  = realMsg(10)
+      thisIntegrator%maxIntensityContribution = realMsg(11)
+    end if
+    
+    !
+    ! Now broadcast the pointer/allocatable arrays
+    !   First determine array sizes and have processes that haven't read the files allocate memory
+    !
+    if(MasterProc) intMsg(1:4) = (/ size(thisIntegrator%cumulativeExt, 1), size(thisIntegrator%cumulativeExt, 2), &  
+                                    size(thisIntegrator%cumulativeExt, 3), size(thisIntegrator%cumulativeExt, 4) /) 
+    call broadcastToAllProcesses(intMsg(1:4))
+    if(.not. MasterProc) then 
+      numX = intMsg(1); numY = intMsg(2); numZ = intMsg(3); numComponents = intMsg(4) 
+      allocate(thisIntegrator%xPosition(numX + 1), & 
+               thisIntegrator%yPosition(numY + 1), &
+               thisIntegrator%zPosition(numZ + 1) )
+      allocate(thisIntegrator%totalExt          (numX, numY, numZ), &
+               thisIntegrator%cumulativeExt     (numX, numY, numZ, numComponents), &
+               thisIntegrator%ssa               (numX, numY, numZ, numComponents), &
+               thisIntegrator%phaseFunctionIndex(numX, numY, numZ, numComponents))
+      allocate(thisIntegrator%tabulatedPhaseFunctions    (numComponents), &
+               thisIntegrator%tabulatedOrigPhaseFunctions(numComponents), &
+               thisIntegrator%inversePhaseFunctions      (numComponents))
+      allocate(thisIntegrator%fluxUp      (numX, numY), &
+               thisIntegrator%fluxDown    (numX, numY), &
+               thisIntegrator%fluxAbsorbed(numX, numY), &
+               thisIntegrator%volumeAbsorption(numX, numY, numZ))
+    end if 
+    
+    !
+    ! Pass the problem definition around 
+    !
+    call broadcastToAllProcesses(thisIntegrator%xPosition)
+    call broadcastToAllProcesses(thisIntegrator%yPosition)
+    call broadcastToAllProcesses(thisIntegrator%zPosition)
+    call broadcastToAllProcesses(thisIntegrator%totalExt)
+    call broadcastToAllProcesses(thisIntegrator%cumulativeExt)
+    call broadcastToAllProcesses(thisIntegrator%ssa)
+    call broadcastToAllProcesses(thisIntegrator%phaseFunctionIndex)
+    !
+    ! Passing the matrix types (used to pack tabulated phase functions) takes more fussing - 
+    !   figure out the size, allocate temporary space, use this to send/receive, then deallocate
+    !
+    do i = 1, numComponents
+      if(MasterProc) intMsg(1:2) = (/ size(thisIntegrator%tabulatedPhaseFunctions(i)%values, 1), &
+                                      size(thisIntegrator%tabulatedPhaseFunctions(i)%values, 2) /) 
+      call broadcastToAllProcesses(intMsg(1:2))
+      allocate(tempArray(intMsg(1), intMsg(2)))
+      if(MasterProc) tempArray(:,:) = thisIntegrator%tabulatedPhaseFunctions(i)%values(:, :)
+      call broadcastToAllProcesses(tempArray)
+      if(.not. MasterProc) thisIntegrator%tabulatedPhaseFunctions(i) = new_Matrix(tempArray(:, :))
+      deallocate(tempArray)
+
+      if(MasterProc) intMsg(1:2) = (/ size(thisIntegrator%tabulatedOrigPhaseFunctions(i)%values, 1), &
+                                      size(thisIntegrator%tabulatedOrigPhaseFunctions(i)%values, 2) /) 
+      call broadcastToAllProcesses(intMsg(1:2))
+      allocate(tempArray(intMsg(1), intMsg(2)))
+      if(MasterProc) tempArray(:,:) = thisIntegrator%tabulatedOrigPhaseFunctions(i)%values(:, :)
+      call broadcastToAllProcesses(tempArray)
+      if(.not. MasterProc) thisIntegrator%tabulatedOrigPhaseFunctions(i) = new_Matrix(tempArray(:, :))
+      deallocate(tempArray)
+
+      if(MasterProc) intMsg(1:2) = (/ size(thisIntegrator%inversePhaseFunctions(i)%values, 1), &
+                                      size(thisIntegrator%inversePhaseFunctions(i)%values, 2) /) 
+      call broadcastToAllProcesses(intMsg(1:2))
+      allocate(tempArray(intMsg(1), intMsg(2)))
+      if(MasterProc) tempArray(:,:) = thisIntegrator%inversePhaseFunctions(i)%values(:, :)
+      call broadcastToAllProcesses(tempArray)
+      if(.not. MasterProc) thisIntegrator%inversePhaseFunctions(i) = new_Matrix(tempArray(:, :))
+      deallocate(tempArray)
+    end do 
+    
+    ! Surface description 
+    if(thisIntegrator%useSurfaceBDRF) call broadcast_surfaceDescription(thisIntegrator%surfaceBDRF)
+     
+    !
+    ! Intensity-related variables  
+    !
+    if(thisIntegrator%computeIntensity) then 
+      if(MasterProc) intMsg(1) = size(thisIntegrator%intensityDirections, 2)
+      call broadcastToAllProcesses(intMsg(1:2))
+      numIntensityDirections = intMsg(1)
+      
+      if(.not. MasterProc) then 
+        !
+        ! We only need to send the directions; the rest of the arrays are internal or for output
+        !
+        allocate(thisIntegrator%intensityDirections(3, numIntensityDirections)) 
+        call broadcastToAllProcesses(thisIntegrator%intensityDirections)
+        
+        allocate(thisIntegrator%intensity           (numX, numY, numIntensityDirections), &
+                 thisIntegrator%intensityByComponent(numX, numY, numIntensityDirections, numComponents))
+        if(thisIntegrator%limitIntensityContributions) &
+          allocate(thisIntegrator%intensityExcess(numIntensityDirections, numComponents))
+      end if 
+    end if 
+  end subroutine broadcast_Integrator
+  !------------------------------------------------------------------------------------------
+
 end module monteCarloRadiativeTransfer
