@@ -1,0 +1,57 @@
+! $Revision: 6 $, $Date: 2009-03-10 16:13:07 -0400 (Tue, 10 Mar 2009) $
+! $URL: https://i3rc-monte-carlo-model.googlecode.com/svn/trunk/Tools/OpticalPropertiesToDomain.f95 $
+!
+ &mie_table_input
+! Namelist input file for MakeMieTable, which makes I3RC Monte Carlo
+! phase function tables for gamma or lognormal size distributions
+! of spherical particles.  The phase function tables are made for
+! a mass content of 1 g/m^3 and contain the extinction, single 
+! scattering albedo, and Legendre coefficients of the phase function
+! tabulated as a function of effective radius.  The effective radii
+! may be spaced linearly or logarithmically.  The index or refraction 
+! is found from tables for water or ice particles, but must be specified
+! for aerosols particles. For water or ice particles the scattering 
+! properties may be averaged over the desired spectral range with 
+! Planck function weighting.
+!
+! Starting and ending wavelength (microns) of band (wavelen1<=wavelen2):
+ WAVELEN1=0.675, 
+ WAVELEN2=0.675,
+! 
+! Average properties over wavelength (A) or use Planck weighted index
+!  of refraction at center wavelength (C).  Averaging is more accurate,
+!  but slower.
+ AVGFLAG='C',
+!
+! 'Wavelength interval if averaging (micron):
+ DELTAWAVE=0.003,
+!
+! Water, Ice, or Aerosol spherical particles (W, I, A):
+ PARTYPE='A',
+!
+! Aerosol complex index of refraction (negative imaginary part):
+ RINDEX=(1.45,-0.010),
+! Aerosol particle bulk density (g/cm^3) :
+ PARDENS=2.0,
+!
+! Particle size distribution type (G = Gamma, L = Lognormal):
+ DISTFLAG='L',
+!
+! Gamma size distribution shape parameter [alpha in n(r)=a*r^alpha *exp(-b*r)]
+! or log standard deviation for lognormal size distribution:
+ ALPHA=0.70,
+!
+! Number of tabulated effective radius (<0 for log-space effective radii):
+ NRETAB=-35,
+! Starting tabulated effective radius (micron):
+ SRETAB=0.1,
+! Ending tabulated effective radius (micron):
+ ERETAB=5.0,
+!
+! Maxium particle radius in size distribution (micron):
+ MAXRADIUS=15.,
+!
+! Output Mie scattering table file name:
+ phaseFunctionTableFile='dust_w0.67_mie.phasetab'
+!
+/
