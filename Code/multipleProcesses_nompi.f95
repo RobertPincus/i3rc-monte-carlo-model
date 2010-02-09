@@ -19,6 +19,13 @@ module multipleProcesses
                      sumAcrossProcesses_Real_1D, sumAcrossProcesses_Real_2D, &
                      sumAcrossProcesses_Real_3D, sumAcrossProcesses_Real_4D
   end interface sumAcrossProcesses
+  
+  interface broadcastToAllProcesses
+    module procedure broadcast_Logical_1D, &
+                     broadcast_Int_S,      &
+                     broadcast_Int_1D,   broadcast_Int_2D,  broadcast_Int_3D,  broadcast_Int_4D, & 
+                     broadcast_Real_1D,  broadcast_Real_2D, broadcast_Real_3D, broadcast_Real_4D
+  end interface broadcastToAllProcesses
 contains
   ! -----------------------------------------------------------
   subroutine initializeProcesses(numProcs, thisProcNum)
@@ -97,5 +104,62 @@ contains
     
   end function sumAcrossProcesses_Real_4D
   ! -----------------------------------------------------------
-  
+  !
+  ! Broadcasting
+  !
+  ! -----------------------------------------------------------
+  subroutine broadcast_Logical_1D(x) 
+    logical, dimension(:), intent(in) :: x 
+    
+  end subroutine broadcast_Logical_1D  
+  ! -----------------------------------------------------------
+  ! Integers
+  ! -----------------------------------------------------------
+  subroutine broadcast_Int_S(x) 
+    integer, intent(in) :: x 
+    
+  end subroutine broadcast_Int_S  
+  ! -----------------------------------------------------------
+  subroutine broadcast_Int_1D(x) 
+    integer, dimension(:), intent(in) :: x 
+    
+  end subroutine broadcast_Int_1D  
+  ! -----------------------------------------------------------
+  subroutine broadcast_Int_2D(x) 
+    integer, dimension(:, :), intent(in) :: x 
+    
+  end subroutine broadcast_Int_2D  
+  ! -----------------------------------------------------------
+  subroutine broadcast_Int_3D(x) 
+    integer, dimension(:, :, :), intent(in) :: x 
+    
+  end subroutine broadcast_Int_3D  
+  ! -----------------------------------------------------------
+  subroutine broadcast_Int_4D(x) 
+    integer, dimension(:, :, :, :), intent(in) :: x 
+    
+  end subroutine broadcast_Int_4D  
+  ! -----------------------------------------------------------
+  ! Reals
+  ! -----------------------------------------------------------
+  subroutine broadcast_Real_1D(x) 
+    real, dimension(:), intent(in) :: x 
+    
+  end subroutine broadcast_Real_1D  
+  ! -----------------------------------------------------------
+  subroutine broadcast_Real_2D(x) 
+    real, dimension(:, :), intent(in) :: x 
+    
+  end subroutine broadcast_Real_2D  
+  ! -----------------------------------------------------------
+  subroutine broadcast_Real_3D(x) 
+    real, dimension(:, :, :), intent(in) :: x 
+    
+  end subroutine broadcast_Real_3D  
+  ! -----------------------------------------------------------
+  subroutine broadcast_Real_4D(x) 
+    real, dimension(:, :, :, :), intent(in) :: x 
+    
+  end subroutine broadcast_Real_4D  
+  ! -----------------------------------------------------------
 end module multipleProcesses
