@@ -81,6 +81,10 @@ contains
     end interface
     
     if(present(message)) print *, message
+    if(iargc() < 1 .and. MasterProc) then 
+      print *, "No file name supplied." 
+      stop
+    end if 
     call getarg(1, GetOneArgument)
     if(MasterProc) print *, 'Using value ' // trim(GetOneArgument)
   end function GetOneArgument
