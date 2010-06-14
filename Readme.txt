@@ -51,8 +51,7 @@ phaseFunctionTables, and produces a file describing the domain
   (Tools/OpticalPropertiesToDomain can be used if the optical properties, rather 
 than the physical properties, are available). 
 *) Example-Drivers/monteCarloDriver reads the domain, computes the radiative
-transfer, and writes out the results. monteCarloDriver-mpi is almost identical 
-but divides the computation across mulitple CPUs for speed. 
+transfer, and writes out the results. 
 
 If what you need are fluxes or intensities at the domain boundaries or heating 
 rates within the domain, you can almost certainly use our programs to solve 
@@ -104,7 +103,7 @@ the compiler available. Some compilers (those from Portland Group, and at least
 some versions of the Sun Forte compilers) simply don't work on this code. Most
 of the development work has been done on Power PC Macs running xlf 8.1 on system
 10.3 and 10.4, and on Intel Linux boxes running the Intel Fortran compiler
-(versions 8, 9, and 10). 
+(versions 8 - 11. 
  
 The code builds under the g95 compiler, which is available for a wide range of
 systems (Windows, Solaris, HP-UX, Mac) from http://g95.org/. Unfortunately, as
@@ -112,14 +111,15 @@ of this writing the g95 compiler produces code that runs very slowly (4-6 times
 more slowly than other compilers) because it spends a lot of time managing
 temporary memory. This will hopefully improve in future.
  
-Compilation options, including the compiler name and compilation flags, are set in 
-the Makefile in the top level directory.This is also where the location of the 
-(required) netcdf files is set, as well as the (optional) location of the 
-MPI message-passing libraries and include files.  This information is
-used by the Makefiles in each subdirectory. We've provided production
-and debugging settings for the Intel ifort and g95 compilers. If you're
-using a new platform add the compiler and flag definitions following
-these examples. I'd appreciate copies of working configurations for other platforms.
+Compilation options, including the compiler name and compilation flags, are set
+in the Makefile in the top level directory.This is also where the location of
+the (required) netcdf files is set, as well as the (optional) location of the
+MPI message-passing libraries and include files.  This information is used by
+the Makefiles in each subdirectory. We've provided production and debugging
+settings for a range of compilers (Intel ifort, g65, Mac Absoft, IBM xlf, and
+the mpif90 Fortran 90 wrapper). If you're using a new platform add the compiler
+and flag definitions following these examples. I'd appreciate copies of working
+configurations for other platforms.
 
 In the examples we have provided most of the parameters are specified using
 namelists. The name of the namelist file must be supplied at run time. Many Unix
@@ -128,11 +128,11 @@ the file name is read from standard in. You can choose which behavior you want
 by commenting out the approriate subroutines in Code/userInterface_Unix.f95
 before compiling.
 
-Once make.common has been edited, type "./Build" in the top level directory. This
-will build everything in all the subdirectories in the proper order. Note that
-the directories must be built in order (Code/, Integrators/, Example-Drivers/;
-Tools/ must be built after Code/) because the dependencies are set in the directories 
-themselves.
+Edit the Makefile in the root directory to reflect your compiler choices and
+type "./Build" in the top level directory. This will build everything in all the
+subdirectories in the proper order. Note that the directories must be built in
+order (Code/, Integrators/, Example-Drivers/; Tools/ must be built after Code/)
+because the dependencies are set in the directories themselves.
 
 The subdirectory Tools/ contains general purpose programs to build "domain"
 files that describe the 3D distribution of optical properties within a domain.

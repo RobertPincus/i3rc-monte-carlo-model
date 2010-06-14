@@ -522,7 +522,10 @@ contains
       ! Compute total extinction and convert cumulative extinction to fractional cumulative extinction. 
       !   Every element of cumulativeExtinction(:, :, :, numComponents) should equal 1 by definition
       !
-      totalExtinction(:, :, minZ:maxZ) = sum(cumulativeExtinction  (:, :, minZ:maxZ, :), dim = 4)
+      do i = 2, numComponents
+        cumulativeExtinction(:, :, :, i) = cumulativeExtinction(:, :, :, i)  + cumulativeExtinction(:, :, :, i-1) 
+      end do
+      totalExtinction(:, :, :) = cumulativeExtinction(:, :, :, numComponents)
       where(spread(totalExtinction, 4, nCopies = numComponents) > tiny(totalExtinction)) &
         cumulativeExtinction(:, :, :, :) = cumulativeExtinction(:, :, :, :)  / spread(totalExtinction, 4, nCopies = numComponents)
     end if
@@ -1004,22 +1007,6 @@ contains
     
     makePrefix = trim(prefixBase) // trim(IntToChar(i)) // "_"
   end function makePrefix
-  !------------------------------------------------------------------------------------------
-  function makePhaseFunctionFileName(baseFileName, i)
-    character(len = *), intent( in) :: baseFileName 
-    integer,            intent( in) :: i
-    character(len = nf90_max_name)  :: makePhaseFunctionFileName
-    
-    makePhaseFunctionFileName  = trim(baseFileName) // "_C" // trim(IntToChar(i)) // "_pft" 
-  end function makePhaseFunctionFileName
-  !------------------------------------------------------------------------------------------
-  function makeInvPhaseFunctionFileName(baseFileName, i)
-    character(len = *), intent( in) :: baseFileName 
-    integer,            intent( in) :: i
-    character(len = nf90_max_name)  :: makeInvPhaseFunctionFileName
-    
-    makeInvPhaseFunctionFileName = trim(baseFileName) // "_C" // trim(IntToChar(i)) // "_ipf" 
-  end function makeInvPhaseFunctionFileName
   !------------------------------------------------------------------------------------------
   elemental function asInt(inValue)
     logical,                 intent( in) :: inValue
