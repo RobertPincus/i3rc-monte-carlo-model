@@ -2154,7 +2154,7 @@ contains
                  thisIntegrator%useHybridPhaseFunsForIntenCalcs, &
                  thisIntegrator%useRussianRouletteForIntensity,  &
                  thisIntegrator%limitIntensityContributions /) 
-    call broadcastToAllProcesses(flags) 
+    call broadcastToAllProcesses(flags)
     if(.not. MasterProc) then 
       thisIntegrator%readyToCompute   = flags(1) 
       thisIntegrator%computeIntensity = flags(2)
@@ -2237,7 +2237,7 @@ contains
     ! Passing the matrix types (used to pack tabulated phase functions) takes more fussing - 
     !   figure out the size, allocate temporary space, use this to send/receive, then deallocate
     !
-    do i = 1, numComponents
+    do i = 1, size(thisIntegrator%cumulativeExt, 4) ! Number of components
       if(MasterProc) intMsg(1:2) = (/ size(thisIntegrator%tabulatedPhaseFunctions(i)%values, 1), &
                                       size(thisIntegrator%tabulatedPhaseFunctions(i)%values, 2) /) 
       call broadcastToAllProcesses(intMsg(1:2))
@@ -2277,19 +2277,19 @@ contains
       call broadcastToAllProcesses(intMsg(1:2))
       numIntensityDirections = intMsg(1)
       
-      if(.not. MasterProc) then 
-        !
-        ! We only need to send the directions; the rest of the arrays are internal or for output
-        !
+      if(.not. MasterProc) then
         allocate(thisIntegrator%intensityDirections(3, numIntensityDirections)) 
-        call broadcastToAllProcesses(thisIntegrator%intensityDirections)
-        
         allocate(thisIntegrator%intensity           (numX, numY, numIntensityDirections), &
                  thisIntegrator%intensityByComponent(numX, numY, numIntensityDirections, numComponents))
         if(thisIntegrator%limitIntensityContributions) &
           allocate(thisIntegrator%intensityExcess(numIntensityDirections, numComponents))
-      end if 
+      end if
+      !
+      ! We only need to send the directions; the rest of the arrays are internal or for output
+      !
+      call broadcastToAllProcesses(thisIntegrator%intensityDirections)
     end if 
+
   end subroutine broadcast_Integrator
   !------------------------------------------------------------------------------------------
 
