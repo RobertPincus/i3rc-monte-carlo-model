@@ -68,7 +68,7 @@ program opticalPropertiesToDomain
   character(len = 256) ::  namelistFileName = ""
   integer              :: nX, nY, nZ
   integer              :: nPhaseEntries, iostat, i, j, k, l, n
-  real                 :: deltaX, deltaY, tempTemp, x, y, z, chi
+  real                 :: deltaX, deltaY, tempTemp, chi
   real,    allocatable :: zPosition(:)
   integer              :: maxLegCoefs
   integer, allocatable :: nLegCoef(:)

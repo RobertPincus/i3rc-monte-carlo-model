@@ -3,7 +3,7 @@
 !   GNU public license, V2 : http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 ! NASA has special rights noted in License.txt
 
-program ParticleFileToDomain
+program PhysicalPropertiesToDomain
  ! $Revision$, $Date$
  ! $URL$
  !
@@ -108,9 +108,9 @@ program ParticleFileToDomain
   
    ! Local variables
   integer              :: nX, nY, nZp, nZt
-  integer              :: i, j, k, n, iscat, ix, iy, iz, il
+  integer              :: i, k, iscat, ix, iy, iz, il
   integer              :: maxNretab, izLevelBase
-  real                 :: deltaX, deltaY, x, y, z, f
+  real                 :: deltaX, deltaY, f
   real, allocatable    :: Zpar(:), TempPar(:)
   integer, allocatable :: nComp(:,:,:), ptype(:,:,:,:)
   real, allocatable    :: MassCont(:,:,:,:), Reff(:,:,:,:)
@@ -354,7 +354,7 @@ program ParticleFileToDomain
   call write_Domain(thisDomain, outputFileName, status)
   call printStatus(status)
   call finalize_Domain(thisDomain)
-end program ParticleFileToDomain
+end program PhysicalPropertiesToDomain
 ! --------------------------------------------------------------------------
 
 subroutine read_particle_file_size (parfile, nx, ny, nzp)

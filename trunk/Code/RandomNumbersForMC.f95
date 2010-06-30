@@ -86,10 +86,10 @@ module RandomNumbers
   integer, parameter :: blockSize = 624,         &
                         M         = 397,         &
                         MATRIX_A  = -1727483681 ! constant vector a (0x9908b0dfUL)
-  integer, parameter :: LMASK =  2147483647, &  ! least significant r bits  (0x7fffffffUL)
-                                                ! Can also use huge(M)
-                        UMASK = -2147483648     ! most significant w-r bits (0x80000000UL)
-                                                ! Can also use not(huge(M)) or - huge(M) - 1
+  integer, parameter :: LMASK =  huge(M),   &  ! least significant r bits  (0x7fffffffUL)
+                                               ! Can also use 2147483647
+                        UMASK = -huge(M) - 1   ! most significant w-r bits (0x80000000UL)
+                                               ! Can also use not(huge(M)) or -2147483648
   ! Tempering parameters
   integer, parameter :: TMASKB= -1658038656, & ! (0x9d2c5680UL)
                         TMASKC= -272236544     ! (0xefc60000UL)

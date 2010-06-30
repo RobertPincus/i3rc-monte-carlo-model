@@ -43,7 +43,7 @@ endif
 
 #### Compiler-specific entries (may override marcos above) 
 
-# Macros are available for ifort, g95, xlf, absoft
+# Macros are available for ifort, g95, xlf, absoft, nagfor (NAGware v5.2)
 compiler=ifort
 debug=no
 
@@ -115,6 +115,23 @@ ifeq ($(compiler),absoft)
     ##Debugging flags
     F95Flags = -g $(Modules) 
     FFLAGS   = -g 
+  endif
+endif
+
+ifeq ($(compiler),nagfor)
+  #
+  # NAG Fortran, v 5.2 
+  #
+  F95         = nagfor
+  F77         = nagfor
+  ifeq ($(debug),no) 
+    # Optimization flags. 
+    F95Flags = -O3 $(Modules) 
+    FFLAGS   = -O3
+  else
+    # Debugging flags
+    F95Flags = -g -C $(Modules)
+    FFLAGS   = -g -C=all -nan
   endif
 endif
 

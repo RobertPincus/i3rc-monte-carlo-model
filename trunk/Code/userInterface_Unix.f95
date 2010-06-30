@@ -66,6 +66,10 @@ contains
 !  end function GetOneArgument
 ! ---------------------------------  
   function GetOneArgument(message)
+    ! 
+    ! Note - When using NAG compilers, uncomment this line and comment out the interface block below.
+    !
+    ! use F90_UNIX_ENV, only: iargc, getarg 
     character (len = *),&
       optional, intent(in) :: message
     character(len = 256)   :: GetOneArgument
@@ -74,6 +78,9 @@ contains
     !   Use this version on systems that support  getarg
     !
     interface 
+      integer function iargc()
+      end function iargc
+      
       subroutine getarg(pos, value)
         integer,            intent(in)  :: pos
         character(len = *), intent(out) :: value
