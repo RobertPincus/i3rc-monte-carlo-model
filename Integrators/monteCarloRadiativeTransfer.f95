@@ -401,7 +401,7 @@ contains
 
         
     ! Local variables
-    real :: xPos, yPos, zPos, xNew, yNew, zNew, mu, phi
+    real :: xPos, yPos, zPos, mu, phi
     real :: x0, y0, z0, xMax, yMax, zMax
     real :: tauToTravel, photonWeight, scatteringAngle, tauAccumulated, ssa, maxExtinction
     real :: initialMu, initialPhi

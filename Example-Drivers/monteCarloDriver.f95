@@ -97,7 +97,7 @@ program monteCarloDriver
    ! Local variables
   character(len=256)   :: namelistFileName
   integer              :: nX, nY, nZ
-  integer              :: i, j, k, batch
+  integer              :: batch
   integer              :: numRadDir
   logical              :: computeIntensity
   real                 :: cpuTime0, cpuTime1, cpuTime2, cpuTimeTotal, cpuTimeSetup
