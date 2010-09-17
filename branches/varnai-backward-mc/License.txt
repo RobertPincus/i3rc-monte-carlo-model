@@ -1,0 +1,14 @@
+Copyright 2003-2009, Regents of the University of Colorado. All rights reserved. 
+Author is Robert Pincus except where contributions from K. Franklin Evans are noted.  
+
+According to the provisions of CFR 1260.30, NASA reserves a
+royalty-free, nonexclusive and irrevocable license to use, reproduce,
+distribute (including distribution by transmission) to the public,
+perform publically, prepare derivative works, and display publically,
+this code in whole or in part and in any manner for Federal purposes and
+to have or permit others to do so for Federal Purposes only.
+
+All other use and redistribution is licensed under version 2 of the Gnu
+Public License, available at
+http://www.gnu.org/licenses/old-licenses/gpl-2.0.html .
+

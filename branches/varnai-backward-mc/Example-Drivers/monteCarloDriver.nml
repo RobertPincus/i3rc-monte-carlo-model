@@ -1,0 +1,106 @@
+! $Revision: 1.10 $, $Date: 2009/02/13 22:57:24 $
+! $Name: Cornish-Gilliflower $
+!
+! Parameters controlling the radiative transfer
+!
+&radiativeTransfer
+  ! Normalization 
+  solarFlux = 1., 
+  ! Cosine of the solar zenith angle
+  solarMu = 0.5,  
+  ! Azimuthal direction of incoming photons (0 = +x direction)
+  solarAzimuth = 0.
+  !
+  surfaceAlbedo = 0., 
+  ! Cosine of directions at which to compute intensity (+ve)
+  !   The number should match the number of azimuths below.  
+  intensityMus = 1., .5, .5
+  ! Azimuth of direction at which to compute intensity
+  intensityPhis = 0., 0., 180. 
+/  
+
+!
+! Parameters controlling the Monte Carlo simulation
+! 
+&monteCarlo
+  ! The number of photons per batch in the MC calculation
+  numPhotonsPerBatch = 10000, 
+  ! The number of batches in the MC calculation
+  !   Total number of photons used is numPhotonsPerBatch * numBatches
+  numBatches = 4, 
+  ! Random number seed (used in conjunction with batch number)
+  iseed = 10, 
+  ! Number of equal probability angles to compute in the inverse phase function
+  nPhaseintervals = 10001
+/
+
+!
+! Algorithmic choices, including variance reduction methods 
+!   for intensity calculations
+!
+&algorithms
+  ! Photon tracing (T) or max cross-section (F)? 
+  useRayTracing = .true., 
+  ! Use Russian roulette (kill/refresh weak photons)? 
+  useRussianRoulette = .true.,
+  !
+  ! The remaining parameters apply only to intensity calculations
+  !
+  ! Use Russian roulette to speed up intensity ray tracing calculations? 
+  !   The method is described in  H. Iwabuchi, JAS 2006, Vol 63, pp 2324-2339
+  !   He suggests a value of zetaMin of about 0.3. 
+  !   Setting zetaMin = 0 has the same effect as not using Russian roulette but 
+  !   will be slower. 
+  !
+  useRussianRouletteForIntensity = .true.,  
+  zetaMin = 0.3, 
+  
+  ! Use hybrid (smoothed) phase function for local estimation of intensity? 
+  !   If .true. and hybridPhaseFunWidth > 0 (but less than 30 degrees)
+  !   intensity calculations (but not photon trajectories) use a phase 
+  !   function that transitions to a Gaussian peak at small scattering 
+  !   angles
+  ! The original phase function can be used for estimates during the first N 
+  !   orders of scattering. 
+  useHybridPhaseFunsForIntenCalcs = .false., 
+  hybridPhaseFunWidth = 0., numOrdersOrigPhaseFunIntenCalcs = 0, 
+  
+  !
+  ! Use Barker et al. (2006) variance reduction method to spatially redistribute 
+  !   large contributions to local estimate of intensity 
+  !
+  limitIntensityContributions = .false., 
+  maxIntensityContribution = 0., 
+/
+
+!
+! Names of input and output files
+!
+&fileNames
+  ! The domain file describing the distribution of optical properties
+  domainFileName = "../Tools/Examples/mixture.dom", 
+  ! Name of ascii file contain intensity at specified direction
+  outputRadFile = "exampleRads.out", 
+  ! Name of ascii file with pixel-by-pixel fluxes
+  outputFluxFile = "exampleFluxes.out", 
+  ! Name of ascii file for the absorption profile
+  outputAbsProfFile = "exampleAbsorption.out",
+  ! Name of ascii file for the absorption per grid cell 
+  !   This file will be larger than the others
+  ! outputAbsVolumeFile = "exampleVolumeAbsorption.out",
+  ! Netcdf output file
+  outputNetcdfFile = "exampleOutput.nc"
+/ 
+
+!
+! Control over which fields are written to the netcdf file
+!
+&output 
+  ! Include the domain-mean flux divergence profile?
+  reportAbsorptionProfile = .false., 
+  ! Include the cell-by-cell flux divergence? 
+  !   This is usually the largest output field by far 
+  reportVolumeAbsorption = .false. 
+  !
+/
+
