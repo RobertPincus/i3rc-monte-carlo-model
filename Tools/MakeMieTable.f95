@@ -217,11 +217,14 @@ PROGRAM MakeMiePhaseFunctionTable
   !
   extinct(:nReTab) = 0.001 * extinct(:nReTab)
 
-
    ! Put the phase function, extinction, and single scattering albedo
    !  in a phase function object for each effective radius
   forall(i = 1:nReTab)  &
     LegCoef(0:Nleg(i), i) = LegCoef(0:Nleg(i), i) / (/ (2*l+1, l=0, Nleg(i)) /)
+  !
+  ! Trap values of single scattering albedo that are slightly bigger than 1
+  !
+  where(SSalb(1:Nretab) > 1. .and. SSalb(1:Nretab) <= 1. + 2. * SPACING(1.)) SSalb(1:Nretab) = 1
    
   ALLOCATE (MiePhaseFuncs(Nretab))
   DO i = 1, Nretab
