@@ -36,13 +36,22 @@ program monteCarloDriver
   !      Merged with single processor version by Robert Pincus, January 2009
 
   ! Modules from the I3RC community Monte Carlo model framework
-  use ErrorMessages
-  use MultipleProcesses
-  use RandomNumbers
-  use scatteringPhaseFunctions
-  use opticalProperties
-  use monteCarloIllumination
-  use monteCarloRadiativeTransfer
+  use ErrorMessages,     only: ErrorMessage,   &
+                               stateIsFailure, &
+                               setStateToFailure, setStateToWarning, setStateToSuccess
+  use MultipleProcesses, only: MasterProc, &
+                               sumAcrossProcesses, initializeProcesses, finalizeProcesses, synchronizeProcesses
+  use RandomNumbers,     only: RandomNumberSequence, &
+                               new_RandomNumberSequence, finalize_RandomNumberSequence
+  use opticalProperties, only: domain, &
+                               read_Domain, getInfo_Domain, finalize_Domain
+  use monteCarloIllumination, &
+                         only: photonStream, &
+                               new_PhotonStream, finalize_photonStream
+  use monteCarloRadiativeTransfer, &
+                         only: integrator, &
+                               new_Integrator, specifyParameters, isReady_Integrator, finalize_Integrator,  &
+                               computeRadiativeTransfer, reportResults
   use UserInterface
 
   implicit none

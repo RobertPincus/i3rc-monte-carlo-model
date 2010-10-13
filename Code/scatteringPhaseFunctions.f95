@@ -13,9 +13,11 @@ module scatteringPhaseFunctions
   !   They may request a stored phase function in either representation. 
   ! Users may optionally provide single scattering albedo and extinction in m^2/particle. 
   
-  use ErrorMessages
-  use CharacterUtils
-  use numericUtilities
+  use ErrorMessages,    only: ErrorMessage,   &
+                              stateIsFailure, &
+                              setStateToFailure, setStateToWarning, setStateToSuccess
+  use CharacterUtils,   only: charToInt, intToChar
+  use numericUtilities, only: findIndex, computeLobattoTerms, computeLegendrePolynomials
   implicit none
   private 
   

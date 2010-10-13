@@ -12,9 +12,16 @@ module opticalProperties
   !   represented separately. 
   ! There are two objects: the domain in which the optical properties are specified, 
   !   and a set of one or more optical components. 
-  use characterUtils
-  use ErrorMessages
-  use scatteringPhaseFunctions
+  use ErrorMessages,    only: ErrorMessage,   &
+                              stateIsFailure, &
+                              setStateToFailure, setStateToWarning, setStateToSuccess
+  use CharacterUtils,   only: intToChar
+  use scatteringPhaseFunctions, &
+                        only: phaseFunctionTable, & 
+                              read_PhaseFunctionTable, copy_PhaseFunctionTable, add_PhaseFunctionTable, &
+                              getInfo_PhaseFunctionTable, isReady_PhaseFunctionTable,                   &
+                              finalize_phaseFunctionTable
+                              
   use netcdf
   implicit none
   private

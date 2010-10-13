@@ -8,8 +8,10 @@
 module UserInterface
   ! $Revision$, $Date$
   ! $Name: Cornish-Gilliflower $
-  use ErrorMessages
-  use MultipleProcesses
+  use ErrorMessages,     only: ErrorMessage, &
+                               stateIsFailure, stateIsWarning, stateIsSuccess, &
+                               getCurrentMessage, firstMessage, nextMessage, moreMessagesExist
+  use MultipleProcesses, only: MasterProc
   implicit none
   private
   public :: printStatus, getOneArgument 

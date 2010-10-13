@@ -14,8 +14,11 @@ module monteCarloIllumination
   ! On input, azimuth is in degrees and zenith angle is specified as the cosine. 
   ! On output, azimuth is in radians (0, 2 pi) and solar mu is negative (down-going). 
   
-  use ErrorMessages
-  use RandomNumbers
+  use ErrorMessages, only: ErrorMessage,   &
+                           stateIsFailure, &
+                           setStateToFailure, setStateToSuccess
+  use RandomNumbers, only: randomNumberSequence, &
+                           getRandomReal
   implicit none
   private
 
