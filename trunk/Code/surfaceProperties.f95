@@ -18,8 +18,10 @@
   !   the atmosphere. 
 ! --------------------------------------------
 module surfaceProperties
-  use ErrorMessages
-  use numericUtilities
+  use ErrorMessages,    only: ErrorMessage,   &
+                              stateIsFailure, &
+                              setStateToFailure, setStateToSuccess
+  use numericUtilities, only: findIndex
   implicit none
   private
   !------------------------------------------------------------------------------------------

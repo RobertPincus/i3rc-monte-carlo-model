@@ -10,7 +10,9 @@ module inversePhaseFunctions
   ! Provides a way to compute, store, and retrieve inverse (cummulative) phase functions 
   !   from objects of type scatteringPhaseFunction. The inverse phase function is a
   !   table of scattering angle as a 
-  use ErrorMessages
+  use ErrorMessages,            only: ErrorMessage,   &
+                                      stateIsFailure, &
+                                      setStateToFailure, setStateToSuccess
   use scatteringPhaseFunctions, only: phaseFunction, phaseFunctionTable,                 &
                                       isReady_PhaseFunctionTable,                        &
                                       getInfo_PhaseFunction, getInfo_PhaseFunctionTable, &

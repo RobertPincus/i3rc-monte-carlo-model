@@ -6,15 +6,27 @@
 ! $Revision$, $Date$
 ! $URL$
 module monteCarloRadiativeTransfer
-  use CharacterUtils
-  use ErrorMessages
-  use RandomNumbers
-  use numericUtilities
-  use scatteringPhaseFunctions
-  use inversePhaseFunctions
-  use opticalProperties
-  use surfaceProperties
-  use monteCarloIllumination
+  use CharacterUtils,    only: intToChar
+  use ErrorMessages,     only: ErrorMessage,   &
+                               stateIsFailure, &
+                               setStateToFailure, setStateToWarning, setStateToSuccess, setStateToCompleteSuccess
+  use RandomNumbers,     only: RandomNumberSequence, &
+                               getRandomReal
+  use numericUtilities,  only: findIndex
+  use scatteringPhaseFunctions, &
+                         only: phaseFunctionTable, &
+                               getInfo_phaseFunctionTable, copy_PhaseFunctionTable, &
+                               getPhaseFunctionValues, finalize_phaseFunctionTable
+  use inversePhaseFunctions, &
+                         only: computeInversePhaseFuncTable
+  use opticalProperties, only: domain, &
+                               read_Domain, getInfo_Domain, getOpticalPropertiesByComponent
+  use surfaceProperties, only: surfaceDescription, &
+                               copy_surfaceDescription, finalize_surfaceDescription, &
+                               isReady_surfaceDescription, computeSurfaceReflectance
+  use monteCarloIllumination, &
+                       only: photonStream, &
+                             getNextPhoton, morePhotonsExist
   implicit none
   private
   
