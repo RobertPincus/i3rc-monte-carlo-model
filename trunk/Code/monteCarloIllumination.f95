@@ -46,7 +46,7 @@ module monteCarloIllumination
   interface new_PhotonStream
     module procedure newPhotonStream_Directional, newPhotonStream_RandomAzimuth, &
                      newPhotonStream_Flux, newPhotonStream_Spotlight,            &
-                     newPhotonStream_Internal_Flux
+                     newPhotonStream_Internal_Flux, newPhotonStream_Internal_Intensity
   end interface new_PhotonStream
   !------------------------------------------------------------------------------------------
   ! What is visible? 
@@ -69,10 +69,12 @@ contains
     type(ErrorMessage),         intent(inout) :: status
     type(photonStream)                        :: photons
     
-        ! Local variables
+    ! -------------------------------------------------
+    ! Local variables
     integer :: i
     
-    ! Checks: are input parameters specified correctly? 
+    ! -------------------------------------------------
+   ! Checks: are input parameters specified correctly? 
     if(numberOfPhotons <= 0) &
       call setStateToFailure(status, "setIllumination: must ask for non-negative number of photons.")
     if(solarAzimuth < 0. .or. solarAzimuth > 360.) &
@@ -80,6 +82,7 @@ contains
     if(abs(solarMu) > 1. .or. abs(solarMu) <= tiny(solarMu)) &
       call setStateToFailure(status, "setIllumination: solarMu out of bounds")
     
+    ! -------------------------------------------------
     if(.not. stateIsFailure(status)) then
       allocate(photons%xPosition(numberOfPhotons),   photons%yPosition(numberOfPhotons), &
                photons%zPosition(numberOfPhotons),                                       &
@@ -87,13 +90,13 @@ contains
                         
       do i = 1, numberOfPhotons
         ! Random initial positions 
-        photons%xPosition(   i) = getRandomReal(randomNumbers)
-        photons%yPosition(   i) = getRandomReal(randomNumbers)
+        photons%xPosition(i) = getRandomReal(randomNumbers)
+        photons%yPosition(i) = getRandomReal(randomNumbers)
       end do
-      photons%zPosition(:) = 1. - spacing(1.) 
+      photons%zPosition(1:numberOfPhotons) = 1. - spacing(1.) 
       ! Specified inital directions
-      photons%initialMu( :) = -abs(solarMu)
-      photons%initialPhi(:) = solarAzimuth * acos(-1.) / 180. 
+      photons%initialMu( 1:numberOfPhotons) = -abs(solarMu)
+      photons%initialPhi(1:numberOfPhotons) = solarAzimuth * acos(-1.) / 180. 
       photons%currentPhoton = 1
       
       call setStateToSuccess(status)
@@ -109,30 +112,33 @@ contains
     type(randomNumberSequence), intent(inout) :: randomNumbers
     type(ErrorMessage),         intent(inout) :: status
     type(photonStream)                        :: photons
-    
+
+    ! -------------------------------------------------
     ! Local variables
     integer :: i
     
+    ! -------------------------------------------------
     ! Checks: are input parameters specified correctly? 
     if(numberOfPhotons <= 0) &
       call setStateToFailure(status, "setIllumination: must ask for non-negative number of photons.")
     if(abs(solarMu) > 1. .or. abs(solarMu) <= tiny(solarMu)) &
       call setStateToFailure(status, "setIllumination: solarMu out of bounds")
     
+    ! -------------------------------------------------
     if(.not. stateIsFailure(status)) then
       allocate(photons%xPosition(numberOfPhotons),   photons%yPosition(numberOfPhotons), &
                photons%zPosition(numberOfPhotons),                                       &
                photons%initialMu(numberOfPhotons), photons%initialPhi(numberOfPhotons))
       do i = 1, numberOfPhotons
         ! Random initial positions 
-        photons%xPosition(   i) = getRandomReal(randomNumbers)
-        photons%yPosition(   i) = getRandomReal(randomNumbers)
+        photons%xPosition( i) = getRandomReal(randomNumbers)
+        photons%yPosition( i) = getRandomReal(randomNumbers)
         ! Random initial azimuth
         photons%initialPhi(i) = getRandomReal(randomNumbers) * 2. * acos(-1.) 
       end do
-      photons%zPosition(:) = 1. - spacing(1.) 
+      photons%zPosition(1:numberOfPhotons) = 1. - spacing(1.) 
       ! but specified inital mu
-      photons%initialMu( :) = -abs(solarMu)
+      photons%initialMu(1:numberOfPhotons) = -abs(solarMu)
       photons%currentPhoton = 1
       
       call setStateToSuccess(status)
@@ -148,13 +154,16 @@ contains
     type(ErrorMessage),         intent(inout) :: status
     type(photonStream)                        :: photons
     
+    ! -------------------------------------------------
     ! Local variables
     integer :: i
     
+    ! -------------------------------------------------
     ! Checks
     if(numberOfPhotons <= 0) &
       call setStateToFailure(status, "setIllumination: must ask for non-negative number of photons.")
      
+    ! -------------------------------------------------
     if(.not. stateIsFailure(status)) then
       allocate(photons%xPosition(numberOfPhotons),   photons%yPosition(numberOfPhotons), &
                photons%zPosition(numberOfPhotons),                                       &
@@ -162,13 +171,13 @@ contains
                
       do i = 1, numberOfPhotons
         ! Random initial positions
-        photons%xPosition(   i) = getRandomReal(randomNumbers)
-        photons%yPosition(   i) = getRandomReal(randomNumbers)
+        photons%xPosition( i) = getRandomReal(randomNumbers)
+        photons%yPosition( i) = getRandomReal(randomNumbers)
         ! Random initial directions
-        photons%initialMu(     i) = -sqrt(getRandomReal(randomNumbers)) 
+        photons%initialMu( i) = -sqrt(getRandomReal(randomNumbers)) 
         photons%initialPhi(i) = getRandomReal(randomNumbers) * 2. * acos(-1.)
       end do
-      photons%zPosition(:) = 1. - spacing(1.) 
+      photons%zPosition(1:numberOfPhotons) = 1. - spacing(1.) 
       
       photons%currentPhoton = 1
       call setStateToSuccess(status)  
@@ -186,6 +195,7 @@ contains
     type(ErrorMessage),         intent(inout) :: status
     type(photonStream)                        :: photons
         
+    ! -------------------------------------------------
     ! Checks: are input parameters specified correctly? 
     if(numberOfPhotons <= 0) &
       call setStateToFailure(status, "setIllumination: must ask for non-negative number of photons.")
@@ -197,17 +207,18 @@ contains
        solarY > 1. .or. solarY <= 0. )    &
       call setStateToFailure(status, "setIllumination: x and y positions must be between 0 and 1")
     
+    ! -------------------------------------------------
     if(.not. stateIsFailure(status)) then
       allocate(photons%xPosition(numberOfPhotons),   photons%yPosition(numberOfPhotons), &
                photons%zPosition(numberOfPhotons),                                       &
                photons%initialMu(numberOfPhotons), photons%initialPhi(numberOfPhotons))
                         
       ! Specified inital directions and position
-      photons%initialMu( :) = -abs(solarMu)
-      photons%initialPhi(:) = solarAzimuth * acos(-1.) / 180. 
-      photons%xPosition(:) = solarX
-      photons%yPosition(:) = solarY
-      photons%zPosition(:) = 1. - spacing(1.) 
+      photons%initialMu( 1:numberOfPhotons) = -abs(solarMu)
+      photons%initialPhi(1:numberOfPhotons) = solarAzimuth * acos(-1.) / 180. 
+      photons%xPosition( 1:numberOfPhotons) = solarX
+      photons%yPosition( 1:numberOfPhotons) = solarY
+      photons%zPosition( 1:numberOfPhotons) = 1. - spacing(1.) 
       photons%currentPhoton = 1
       
       call setStateToSuccess(status)
@@ -231,9 +242,11 @@ contains
     
     ! Backwards Monte Carlo - create an internal source of photons distributed over the hemisphere
     
+    ! -------------------------------------------------
     integer :: i, numberToReplace
     integer, dimension(numberOfPhotons) :: photonsToReplace
     
+    ! -------------------------------------------------
     ! Checks: are input parameters specified correctly? 
     if(numberOfPhotons <= 0) &
       call setStateToFailure(status, "setIllumination: must ask for non-negative number of photons.")
@@ -254,6 +267,7 @@ contains
     if(.not. detectorPointsUp .and. detectorZ           < 2. * tiny(0.)   ) &
       call setStateToWarning(status, "setIllumination: Detector is at bottom of domain pointed down")
 
+    ! -------------------------------------------------
     if(.not. stateIsFailure(status)) then
       allocate(photons%xPosition(numberOfPhotons), photons%yPosition(numberOfPhotons), &
                photons%zPosition(numberOfPhotons),                                     &
@@ -262,12 +276,14 @@ contains
       photons%xPosition(1:numberOfPhotons) = detectorX
       photons%yPosition(1:numberOfPhotons) = detectorY
       photons%zPosition(1:numberOfPhotons) = detectorZ
+      !
+      ! People might specify the boundaries; it's easier to buy ourselves a smidgen of breathing room
+      !
       if(detectorPointsUp) then 
         photons%zPosition(1:numberOfPhotons) = max(photons%zPosition(1:numberOfPhotons), 2. * tiny(0.))
       else
         photons%zPosition(1:numberOfPhotons) = min(photons%zPosition(1:numberOfPhotons), 1. - spacing(1.))
       end if 
-      photons%currentPhoton = 1
       do i = 1, numberOfPhotons
         ! Random initial directions
         photons%initialMu (i) = sqrt(getRandomReal(randomNumbers)) 
@@ -305,14 +321,107 @@ contains
         end do 
       end if
       
+      photons%currentPhoton = 1
       call setStateToSuccess(status)
    end if   
   end function newPhotonStream_Internal_Flux
   !------------------------------------------------------------------------------------------
-!  function newPhotonStream_Internal_Intensity(xPos, yPos, zPos, mu, phi,           &
-!                                              deltaX, deltaY, deltaZ, deltaTheta,  &
-!                                              numberOfPhotons, randomNumbers, status) result(photons)
-!  end function newPhotonStream_Internal_Intensity
+  function newPhotonStream_Internal_Intensity(detectorX, detectorY, detectorZ, & 
+                                              detectorMu, detectorPhi,         &
+                                              deltaX,     deltaY,    deltaTheta, &
+                                              numberOfPhotons, randomNumbers, status) result(photons)
+                                         
+    real,               intent(in)    :: detectorX, detectorY, detectorZ 
+                                         ! Detector center
+    real,               intent(in)    :: detectorMu, detectorPhi    ! phi in degrees
+    real,     optional, intent(in)    :: deltaX, deltaY, deltaTheta ! deltaTheta in degrees 
+                                                 ! Detector full width 
+    integer                           :: numberOfPhotons
+    type(randomNumberSequence), & 
+              optional, intent(inout) :: randomNumbers
+    type(ErrorMessage), intent(inout) :: status
+    type(photonStream)                :: photons
+    
+    ! Backwards Monte Carlo - create an internal source of photons in a single direction
+    
+    ! -------------------------------------------------
+    integer :: i, numberToReplace
+    integer, dimension(numberOfPhotons) :: photonsToReplace    
+    ! -------------------------------------------------
+    
+    ! Checks: are input parameters specified correctly? 
+    if(numberOfPhotons <= 0) &
+      call setStateToFailure(status, "setIllumination: must ask for non-negative number of photons.")
+    if(detectorX > 1. .or. detectorX <= 0. .or. &
+       detectorY > 1. .or. detectorY <= 0. .or. &
+       detectorZ > 1. .or. detectorZ <= 0. )    &
+      call setStateToFailure(status, "setIllumination: x, y, z positions must be between 0 and 1")
+    if(present(deltaX)) then 
+      if(detectorX + deltaX/2. > 1. .or. detectorX - deltaX/2 <= 0.) &
+        call setStateToFailure(status, "setIllumination: max, min positions must be between 0 and 1")
+    end if 
+    if(present(deltaY)) then 
+      if(detectorY + deltaY/2. > 1. .or. detectorY - deltaY/2 <= 0.) &
+        call setStateToFailure(status, "setIllumination: max, min positions must be between 0 and 1")
+    end if 
+    
+    if(detectorPhi < 0. .or. detectorPhi > 360.) &
+      call setStateToFailure(status, "setIllumination: detectorPhi out of bounds")
+    if(abs(detectorMu) > 1. .or. abs(detectorMu) <= tiny(detectorMu)) &
+      call setStateToFailure(status, "setIllumination: detectorMu out of bounds")
+      
+    if(detectorMu > 0. .and. abs(detectorZ - 1.) < 2. * spacing(1.)) &
+      call setStateToWarning(status, "setIllumination: Detector is at top of domain pointed up")
+    if(detectorMu < 0. .and. detectorZ           < 2. * tiny(0.)   ) &
+      call setStateToWarning(status, "setIllumination: Detector is at bottom of domain pointed down")
+
+    if(present(deltaTheta)) & 
+      call setStateToWarning(status, "setIllumination: Finite detector angular width not yet implemented")
+      
+    ! -------------------------------------------------
+    
+    if(.not. stateIsFailure(status)) then
+      allocate(photons%xPosition(numberOfPhotons), photons%yPosition(numberOfPhotons), &
+               photons%zPosition(numberOfPhotons),                                     &
+               photons%initialMu(numberOfPhotons), photons%initialPhi(numberOfPhotons))
+                        
+      photons%xPosition (1:numberOfPhotons) = detectorX
+      photons%yPosition (1:numberOfPhotons) = detectorY
+      photons%zPosition (1:numberOfPhotons) = detectorZ
+      photons%initialMu (1:numberOfPhotons) = detectorMu
+      photons%initialPhi(1:numberOfPhotons) = detectorPhi
+      !
+      ! People might specify the boundaries; it's easier to buy ourselves a smidgen of breathing room
+      !
+      if(detectorMu > tiny(detectorMu)) then 
+        photons%zPosition(1:numberOfPhotons) = max(photons%zPosition(1:numberOfPhotons), 2. * tiny(0.))
+      else
+        photons%zPosition(1:numberOfPhotons) = min(photons%zPosition(1:numberOfPhotons), 1. - spacing(1.))
+      end if 
+
+      !
+      ! Finite extent detector 
+      !
+      if(present(deltaX)) then 
+        do i = 1, numberOfPhotons
+          photons%xPosition(i) = photons%xPosition(i) + deltaX * (1. - 0.5 * getRandomReal(randomNumbers))
+        end do 
+      end if
+
+      if(present(deltaY)) then 
+        do i = 1, numberOfPhotons
+          photons%yPosition(i) = photons%yPosition(i) + deltaY * (1. - 0.5 * getRandomReal(randomNumbers))
+        end do 
+      end if
+      
+      !
+      ! Finite angular resolution - not yet implemented 
+      !
+
+      photons%currentPhoton = 1
+      call setStateToSuccess(status)
+   end if   
+  end function newPhotonStream_Internal_Intensity
   !------------------------------------------------------------------------------------------
   ! Are there more photons? Get the next photon in the sequence
   !------------------------------------------------------------------------------------------
