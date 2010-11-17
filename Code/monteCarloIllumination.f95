@@ -7,16 +7,16 @@
 ! $URL$
 module monteCarloIllumination
   ! Provides an object representing a series of photons. The object specifies the 
-  !   initial x, y position and direction. 
+  !   initial position and direction. 
   ! In principle any arbitrary illumination condition can be specified. 
-  ! Initial x, y positions are between 0 and 1, and must be scaled by the Monte Carlo
+  ! Initial positions are between 0 and 1, and must be scaled by the Monte Carlo
   !   integrator. 
   ! On input, azimuth is in degrees and zenith angle is specified as the cosine. 
-  ! On output, azimuth is in radians (0, 2 pi) and solar mu is negative (down-going). 
+  ! On output, azimuth is in radians (0, 2 pi). For solar sources mu is negative (down-going). 
   
   use ErrorMessages, only: ErrorMessage,   &
                            stateIsFailure, &
-                           setStateToFailure, setStateToSuccess
+                           setStateToFailure, setStateToWarning, setStateToSuccess
   use RandomNumbers, only: randomNumberSequence, &
                            getRandomReal
   implicit none
