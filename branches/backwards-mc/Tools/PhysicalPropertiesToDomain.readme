@@ -1,0 +1,114 @@
+$Revision: 1.1 $, $Date: 2006/02/06 20:51:50 $
+$Name: Cornish-Gilliflower $
+
+*** What the program does
+
+PhysicalPropertiesToDomain reads an ASCII file describing the
+three-dimensional distribution of clouds and/or aerosols within some
+domain then and writes the description to a "domain" object from the
+I3RC community model. Profiles of molecular absoprtion can be added and
+Rayleigh scattering can be included.
+
+*** How to control the program
+
+The program reads three namelists from a file; the name of this file
+can be specified either by reading from the command line or by reading
+from standard in, according to the getOneArgument() procedure in
+userInterface_Unix.f95.
+
+The file contains three namelists with entries and default values as follows: 
+
+namelist fileNames
+  ParticleFileName="", 
+Name of the ASCII particle file to read. The file format is described below. 
+  ScatTableFiles="",
+The name(s) of one or more files to read describing the single
+scattering properties of each kind of particle (i.e. water drops, ice
+crystals, aerosols) that exists in the domain. The program can read at
+most maxNumComps of these files; this value is currently set to 5.
+  MolecAbsFileName="",
+The name of the file describing the profile of absorption by gases as a function
+of height. The format is described below. 
+  outputFileName = ""
+The name of the "domain" file to be written. 
+
+namelist profile
+  OtherHeights=0.,
+  OtherTemps=0.,
+Users may want to compute the radiative transfer in a domain that
+extends beyond the limits of the particles (i.e. to extend the domain to
+the ground when the cloud lies well above it, or to include absorption
+by gases above the cloud). This is accomplished by provide the
+OtherHeights (km, increasing) and OtherTemps (K) to include in the
+domain. Only the first N levels for which a non-zero temperature is
+provided are included in the calculation.
+
+&physicalProperties
+  DropNumConc=0.,
+Number concentration of cloud drops. Used to compute effective radius when 
+cloud liquid water content is specified (the LWC option for the particle file
+format). 
+  RayleighWavelength=.0,
+Wavelength at which to compute Rayleigh scattering; the algorithm is 
+described below. 
+
+*** Input and output files
+
+The input file (ParticleFileName) describing the  particle properties
+(mass content and effective radius) may be specified in three different
+ways:
+  1) One parameter LWC file.  Header:
+       1                [format type]
+       nX nY nZ         [number of X, Y, Z grid cells]
+       deltaX deltaY    [X and Y grid cell size in km]
+       Zlevels(1:nZ+1)  [increasing heights of cell boundaries in km]
+       Temps(1:nZ+1)    [temperatures of boundaries (K)]
+     One line per grid cell with:  iX iY iZ  LWC 
+        iX,iY,iZ are indices from 1 to nX,nY,nZ, and
+        LWC is cloud liquid water content (g/m^3).
+        The effective radius is obtained from LWC using
+          Reff = 100* (LWC*0.75*1.3889/(3.14159*DropNumConc))**(1/3)
+  2) Two parameter LWC file.  Same header as 1 parameter LWC file,
+     but with "2" starting the first line. 
+     One line per grid cell with:  iX iY iZ  LWC Reff
+        Reff is the effective radius (micron).
+  3) Multicomponent particle properties file. Header:
+       3                [format type]  
+       nX nY nZ         [number of X, Y, Z grid cells]
+       deltaX deltaY    [X and Y grid spacing in km]   
+       Zlevels(1:nZ+1)  [increasing heights of cell boundaries in km]
+       Temps(1:nZ+1)    [temperatures of boundaries (K)]
+     One line per grid cell with:  
+       iX iY iZ  Numcomp Type1 Mass1 Reff1 ... TypeN MassN ReffN
+     Numcomp is the number of particle components in this cell, 
+     Type? are the type numbers of the components, 
+     Mass? are the mass contents [g/m^3] of the components, and 
+     Reff? are the effective radii [microns] of the components.  
+     The type number refers to the scattering table number 
+     (in the range 1 to number of scattering tables input).
+
+The scattering properties for each component (ScatTableFiles) are
+specified in files containing I3RC Monte Carlo phase function table
+objects (e.g. written by MakeMieTable).
+ 
+An input file of molecular absorption extinction profile may be input by
+providing MolecAbsFileName. The Zlevels must be the same as the profile
+made by combining the levels in the particle file with the other levels
+specified in the namelist file.  Format (three lines): 
+  nZ               [number of Z grid cells] 
+  Zlevels(1:nZ+1)  [increasing heights of cell boundaries in km] 
+  GasExt(1:nZ)     [molecular extinction in km^-1 for each cell]
+
+The output file is a "domain" file as produced by the 
+write_Domain() procedure in the opticalProperties module. 
+
+*** Details 
+
+Molecular Rayleigh scattering may be included by setting
+RayleighWavelength > 0. The  temperature profile is used to calculate
+the pressure profile with the hypsometric equation.  The Rayleigh
+extinction profile, which is proportional to air density, is calculated
+from the temperature and pressure profiles and the wavelength.  The
+average extinction in each layer is calculated, assuming an exponential
+decay in air density.
+
