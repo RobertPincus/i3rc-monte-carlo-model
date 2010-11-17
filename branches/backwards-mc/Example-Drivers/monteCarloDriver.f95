@@ -52,7 +52,7 @@ program monteCarloDriver
                          only: integrator, &
                                new_Integrator, specifyParameters, isReady_Integrator, finalize_Integrator,  &
                                computeRadiativeTransfer, reportResults
-  use UserInterface
+  use UserInterface,    only: printStatus, getOneArgument 
 
   implicit none
 
