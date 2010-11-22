@@ -64,6 +64,9 @@ module monteCarloRadiativeTransfer
     ! Use Russian roulette? 
     logical                                 :: useRussianRoulette = .true. 
     real                                    :: RussianRouletteW = 1. 
+    ! Backwards Monte Carlo? Affects intensity contribution normalization 
+    !   and direct beam calculation 
+    logical                                 :: doBackwardsMC = .false. 
         
     ! -------------------------------------------------------------------------=                                           
     ! The atmosphere and surface 
@@ -153,7 +156,7 @@ module monteCarloRadiativeTransfer
   !------------------------------------------------------------------------------------------
   public :: integrator
   public :: new_Integrator, copy_Integrator, isReady_Integrator, finalize_Integrator, &
-            specifyParameters, computeRadiativeTransfer, reportResults
+            specifyParameters, computeRadiativeTransfer, backwardsRadiativeTransfer, reportResults
 contains
   !------------------------------------------------------------------------------------------
   ! Initialization: Routines to create new integrators, specifying 
@@ -266,14 +269,10 @@ contains
     type(ErrorMessage),         intent(inout) :: status
     !
     ! Monte Carlo "integrator" to compute flux up at the top boundary, flux down at the
-    !   bottom boundary, and colum absorption. (Absorption is calculated separately, 
+    !   bottom boundary, and column absorption. (Absorption is calculated separately, 
     !   and should agree with the difference in boundary fluxes.) 
     ! Intensity at a set of zenith angle cosine and azimuth angles at the top and bottom boundaries
     !   may be computed using local estimation. 
-    ! The bottom boundary is a Lambertian surface with default albedo 0. That 
-    !   value may be changed with a call to specifyParameters(). 
-    ! This routine calls one of two solvers: computeRT_MaxCrossSection for maximum
-    !   cross-section and computeRT_PhotonTracing for simple ray tracing. 
     
     ! Local variables
     integer :: numPhotonsProcessed
@@ -397,6 +396,105 @@ contains
     end if
   end subroutine computeRadiativeTransfer
   !------------------------------------------------------------------------------------------
+  subroutine backwardsRadiativeTransfer(thisIntegrator, randomNumbers, incomingPhotons, status)
+    type(integrator),           intent(inout) :: thisIntegrator
+    type(randomNumberSequence), intent(inout) :: randomNumbers
+    type(photonStream),         intent(inout) :: incomingPhotons  
+    type(ErrorMessage),         intent(inout) :: status
+    !
+    ! Backwards Monte Carlo integration. Photons are introduced somewhere in the medium and local 
+    !   estimation used to trace back to each solar position. 
+    ! It only makes sense to call this routine if a calculation has been defined by setting 
+    !   intensityMus and intensityPhis in setParameters. Most algorithmic choices are valid here 
+    !   though limiting individual local estimates (limitIntensityContributions) doesn't make sense. 
+    
+    ! Local variables
+    integer :: numPhotonsProcessed
+    integer :: numSolarDirections, numX, numY, numZ, numComponents, j, k, d
+    real, dimension(:, :), allocatable &
+            :: numPhotonsPerColumn
+
+    ! Sanity checks
+    if(.not. isReady_integrator(thisIntegrator)) &
+      call setStateToFailure(status, "backwardsRadiativeTransfer: problem not completely specified.")
+    if(.not. thisIntegrator%computeIntensity) & 
+      call setStateToFailure(status, "backwardsRadiativeTransfer: problem not completely specified - no solar positions")
+    
+    if(.not. stateIsFailure(status)) then 
+      thisIntegrator%doBackwardsMC = .true. 
+      numX = size(thisIntegrator%xPosition) - 1
+      numY = size(thisIntegrator%yPosition) - 1
+      numZ = size(thisIntegrator%zPosition) - 1
+      numComponents      = size(thisIntegrator%cumulativeExt, 4) 
+      numSolarDirections = size(thisIntegrator%intensityDirections, 2)
+      
+      if(associated(thisIntegrator%intensity)) thisIntegrator%intensity(:, :, :) = 0. 
+      if(associated(thisIntegrator%intensityByComponent)) &
+                                               thisIntegrator%intensityByComponent(:, :, :, :) = 0. 
+      
+      !
+      ! Compute tablulated forward and inverse phase functions
+      !   Forward phase functions are only needed if we're going to compute intensity
+      !
+      call tabulateInversePhaseFunctions(thisIntegrator, status)
+      if(.not. stateIsFailure(status)) then
+        call tabulateForwardPhaseFunctions(thisIntegrator, status)
+      end if
+            
+      !------------------------------------------------------------------------------
+      !
+      ! Compute radiative transfer for this photon batch 
+      !
+      if(.not. stateIsFailure(status)) &
+         call computeRT(thisIntegrator, randomNumbers, incomingPhotons, numPhotonsProcessed, status)
+
+      !------------------------------------------------------------------------------
+      !
+      ! Only the local estimates contain useful information
+      !
+      
+      thisIntegrator%fluxUp(:, :)       = 0.
+      thisIntegrator%fluxDown(:, :)     = 0.
+      thisIntegrator%fluxAbsorbed(:, :) = 0.
+      thisIntegrator%volumeAbsorption(:, :, :) &
+                                        = 0.
+      if(associated(thisIntegrator%intensityByComponent)) &
+                                               thisIntegrator%intensityByComponent(:, :, :, :) = 0. 
+      if(associated(thisIntegrator%intensityExcess)) &
+                                               thisIntegrator%intensityExcess(:, :) = 0. 
+      
+      !------------------------------------------------------------------------------
+      !
+      ! Normalization - compute the average number of photons incident on each column
+      !
+      allocate(numPhotonsPerColumn(numX, numY))
+      
+      if(thisIntegrator%xyRegularlySpaced) then
+        numPhotonsPerColumn(:, :) = numPhotonsProcessed / real(numX * numY)
+      else
+        do j = 1, numY
+          ! Relative area of each column 
+          numPhotonsPerColumn(:, j) = ( (thisIntegrator%yPosition(j+1) - thisIntegrator%yPosition(j)) *       &
+                                        (thisIntegrator%xPosition(2:) - thisIntegrator%xPosition(1:numX)) ) / & 
+                                      ( (thisIntegrator%xPosition(numX+1) - thisIntegrator%xPosition(1)) *    &
+                                        (thisIntegrator%yPosition(numY+1) - thisIntegrator%yPosition(1)) ) 
+        end do
+        ! Now the number of photons incident per column
+        numPhotonsPerColumn(:, :) = numPhotonsPerColumn(:, :) * numPhotonsProcessed  
+      end if 
+      
+      !
+      ! Intensity is normalized by the average number of photons per column. 
+      !
+      do d = 1, numSolarDirections
+        thisIntegrator%intensity(:, :, d) =  thisIntegrator%intensity(:, :, d) / numPhotonsPerColumn(:, :)
+      end do
+      deallocate(numPhotonsPerColumn)  
+    end if
+    thisIntegrator%doBackwardsMC = .false. 
+
+  end subroutine backwardsRadiativeTransfer
+  !------------------------------------------------------------------------------------------
   subroutine computeRT(thisIntegrator, randomNumbers, incomingPhotons, &
                                 numPhotonsProcessed, status)
     type(integrator),           intent(inout) :: thisIntegrator
@@ -472,6 +570,9 @@ contains
       ! Loop over orders of scattering
       !
       scatteringLoop: do
+        if(thisIntegrator%doBackwardsMC) then 
+          ! Compute direct beam contribution
+        end if
         !
         ! The optical distance we need to travel. 
         !   It's possible for the random number generator to produce exactly 0; 
@@ -659,6 +760,7 @@ contains
                                                 randomNumbers, scatteringOrder, &
                                                 contributions, xIndexF(:), yIndexf(:))              
     
+              if(thisIntegrator%doBackwardsMc) contributions(:) = contributions(:) * Pi
               do i = 1, numIntensityDirections
                 thisIntegrator%intensity(xIndexF(i), yIndexf(i), i) =  &
                   thisIntegrator%intensity(xIndexF(i), yIndexf(i), i) + contributions(i)

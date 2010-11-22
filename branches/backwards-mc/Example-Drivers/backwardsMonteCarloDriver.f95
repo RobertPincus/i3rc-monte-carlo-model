@@ -74,13 +74,13 @@ program backwardsMonteCarloDriver
   
   ! File names
   character(len=256)   :: domainFileName = ""
-  character(len=256)   :: outputFluxFile = "", outputRadFile = "",  &
-                          outputAbsProfFile = "", outputAbsVolumeFile = "", &
-                          outputNetcdfFile = ""
+  character(len=256)   :: outputASCIIFile = "", outputNetcdfFile = ""
 
   namelist /radiativeTransfer/ solarFlux, surfaceAlbedo,                  &
                                detectorX, detectorY, detectorZ,           &
+                               detDeltaX, detDeltaY,                      &
                                detectorMu, detectorPhi, detectorPointsUp, &
+                               detDeltaTheta,                             &
                                solarMus, solarPhis
   namelist /monteCarlo/ numPhotonsPerBatch, numBatches, iseed, nPhaseIntervals
   namelist /algorithms/ useRayTracing, useRussianRoulette,                    &
@@ -89,8 +89,7 @@ program backwardsMonteCarloDriver
                         useRussianRouletteForIntensity, zetaMin
                         
   namelist /fileNames/ domainFileName, &
-                       outputRadFile, outputFluxFile, &
-                       outputNetcdfFile
+                       outputASCIIFile, outputNetcdfFile
 
 
    ! Local variables
@@ -98,10 +97,12 @@ program backwardsMonteCarloDriver
   character(len=256)   :: namelistFileName
   integer              :: nX, nY, nZ
   integer              :: batch
-  integer              :: numSuns
+  integer              :: s, numSuns
   real                 :: cpuTime0, cpuTime1, cpuTime2, cpuTimeTotal, cpuTimeSetup
   real, allocatable    :: xPosition(:), yPosition(:), zPosition(:)
-  real, allocatable    :: Outputs(:, :, :), AccumOutputs(:, :, :, :)
+  real, allocatable    :: Outputs(:, :, :)
+  real                 :: AccumOutputs(maxNumSuns, 2) = 0. 
+  real,      parameter :: Pi = 3.14159265358979312
 
   ! I3RC Monte Carlo code derived type variables
   type(domain)               :: thisDomain
@@ -157,10 +158,14 @@ program backwardsMonteCarloDriver
                           status = status)
   call printStatus(status) 
 
+  !
+  ! Intensity phi is specified as solar phi + 180 because sunlight 
+  !   propagates into the domain but the reflect intensity propagates out. 
+  !
   call specifyParameters (mcIntegrator, &
-                          minForwardTableSize=nPhaseIntervals, &
-                          intensityMus  = solarMus(1:numSuns), &
-                          intensityPhis = solarPhis(1:numSuns), &
+                          minForwardTableSize=nPhaseIntervals,         &
+                          intensityMus  = solarMus (1:numSuns),        &
+                          intensityPhis = solarPhis(1:numSuns) + 180., &
                           computeIntensity=.true., status=status)
   call printStatus(status) 
 
@@ -182,8 +187,7 @@ program backwardsMonteCarloDriver
                          status = status)
   call printStatus(status) 
 
-  allocate (Outputs(nX, nY, numSuns), AccumOutputs(nX, nY, numSuns, 2))
-  AccumOutputs(:, :, :, :) = 0.0
+  allocate (Outputs(nX, nY, numSuns))
 
   !
   ! Are we computing flux or intensity?   
@@ -243,8 +247,10 @@ program backwardsMonteCarloDriver
 
      ! Get the radiative quantities:
     call reportResults(mcIntegrator, intensity = Outputs(:, :, :), status = status)
-    AccumOutputs(:, :, :, 1) = AccumOutputs(:, :, :, 1) + Outputs(:, :, :)
-    AccumOutputs(:, :, :, 2) = AccumOutputs(:, :, :, 2) + Outputs(:, :, :)**2
+    do s = 1, numSuns
+      AccumOutputs(s, 1) = AccumOutputs(s, 1) + sum(outputs(:, :, s)) 
+      AccumOutputs(s, 2) = AccumOutputs(s, 2) + sum(outputs(:, :, s))**2 
+    end do 
 
      ! Release the photon "illumination" object memory
     call finalize_PhotonStream (incomingPhotons)
@@ -254,7 +260,7 @@ program backwardsMonteCarloDriver
   !
   ! Accumulate statistics from across all the processors
   !
-  AccumOutputs(:, :, :, :) = sumAcrossProcesses(AccumOutputs)
+  AccumOutputs(:, :) = sumAcrossProcesses(AccumOutputs)
 
   call synchronizeProcesses
   call cpu_time(cpuTime2)
@@ -264,10 +270,11 @@ program backwardsMonteCarloDriver
   if (MasterProc) print *, "Total CPU time (secs, approx): ", int(cpuTimeTotal)
 
   ! Calculate the mean and standard error of the radiative quantities from the two moments
-  AccumOutputs(:, :, :, :) = solarFlux * AccumOutputs(:, :, :, :)/numBatches
-  AccumOutputs(:, :, :, 2) = sqrt( max(0., AccumOutputs(:, :, :, 2) - AccumOutputs(:, :, :,1)**2) /(numBatches-1))
+  AccumOutputs(:, :) = solarFlux * AccumOutputs(:, :)/numBatches
+  AccumOutputs(:, 2) = sqrt( max(0., AccumOutputs(:, 2) - AccumOutputs(:, 1)**2) /(numBatches-1))
 
   if(MasterProc) then ! Write a single output file. 
+    call writeResults_ASCII
   end if
 
   !
@@ -275,7 +282,7 @@ program backwardsMonteCarloDriver
   !   the output but this fails intermittently, so we want to be sure to get our results 
   !   before we take a chance on blowing up. 
   ! 
-  deallocate (outputs, AccumOutputs)
+  deallocate (outputs)
   call finalize_RandomNumberSequence(randoms)
   call finalize_Integrator (mcIntegrator)
 
@@ -285,39 +292,74 @@ contains
 
     if(computeFlux) then 
       if(detDeltaX > 0. .or. detDeltaY > 0.) then 
-        incomingPhotons = new_PhotonStream ((xPosition(nX + 1) - detectorX) / (xPosition(nX + 1) - xPosition(1)), &
-                                            (yPosition(nY + 1) - detectorY) / (yPosition(nY + 1) - yPosition(1)), &
-                                            (zPosition(nZ + 1) - detectorZ) / (zPosition(nZ + 1) - zPosition(1)), &
-                                            detectorPointsUp,                                                     &
-                                            (xPosition(nX + 1) - detDeltaX) / (xPosition(nX + 1) - xPosition(1)), &
-                                            (yPosition(nY + 1) - detDeltaY) / (yPosition(nY + 1) - yPosition(1)), &
+        incomingPhotons = new_PhotonStream ((detectorX - xPosition(1)) / (xPosition(nX + 1) - xPosition(1)), &
+                                            (detectorY - yPosition(1)) / (yPosition(nY + 1) - yPosition(1)), &
+                                            (detectorZ - zPosition(1)) / (zPosition(nZ + 1) - zPosition(1)), &
+                                            detectorPointsUp,                                                &
+                                            (detDeltaX - xPosition(1)) / (xPosition(nX + 1) - xPosition(1)), &
+                                            (detDeltaY - yPosition(1)) / (yPosition(nY + 1) - yPosition(1)), &
                                             numberOfPhotons = n, randomNumbers = randoms, status=status)
       else
-        incomingPhotons = new_PhotonStream ((xPosition(nX + 1) - detectorX) / (xPosition(nX + 1) - xPosition(1)), &
-                                            (yPosition(nY + 1) - detectorY) / (yPosition(nY + 1) - yPosition(1)), &
-                                            (zPosition(nZ + 1) - detectorZ) / (zPosition(nZ + 1) - zPosition(1)), &
-                                            detectorPointsUp,                                                     &
+        incomingPhotons = new_PhotonStream ((detectorX - xPosition(1)) / (xPosition(nX + 1) - xPosition(1)), &
+                                            (detectorY - yPosition(1)) / (yPosition(nY + 1) - yPosition(1)), &
+                                            (detectorZ - zPosition(1)) / (zPosition(nZ + 1) - zPosition(1)), &
+                                            detectorPointsUp,                                                &
                                             numberOfPhotons = n, randomNumbers = randoms, status=status)
       end if
     else
       if(detDeltaX > 0. .or. detDeltaY > 0. .or. detDeltaTheta > 0.) then 
-        incomingPhotons = new_PhotonStream ((xPosition(nX + 1) - detectorX) / (xPosition(nX + 1) - xPosition(1)), &
-                                            (yPosition(nY + 1) - detectorY) / (yPosition(nY + 1) - yPosition(1)), &
-                                            (zPosition(nZ + 1) - detectorZ) / (zPosition(nZ + 1) - zPosition(1)), &
-                                            detectorMu, detectorPhi,                                              &
-                                            (xPosition(nX + 1) - detDeltaX) / (xPosition(nX + 1) - xPosition(1)), &
-                                            (yPosition(nY + 1) - detDeltaY) / (yPosition(nY + 1) - yPosition(1)), &
-                                            detDeltaTheta,                                                        &
+        incomingPhotons = new_PhotonStream ((detectorX - xPosition(1)) / (xPosition(nX + 1) - xPosition(1)), &
+                                            (detectorY - yPosition(1)) / (yPosition(nY + 1) - yPosition(1)), &
+                                            (detectorZ - zPosition(1)) / (zPosition(nZ + 1) - zPosition(1)), &
+                                            detectorMu, detectorPhi,                                         &
+                                            (detDeltaX - xPosition(1)) / (xPosition(nX + 1) - xPosition(1)), &
+                                            (detDeltaY - yPosition(1)) / (yPosition(nY + 1) - yPosition(1)), &
+                                            detDeltaTheta,                                                   &
                                             numberOfPhotons = n, randomNumbers = randoms, status=status)
       else
-        incomingPhotons = new_PhotonStream ((xPosition(nX + 1) - detectorX) / (xPosition(nX + 1) - xPosition(1)), &
-                                            (yPosition(nY + 1) - detectorY) / (yPosition(nY + 1) - yPosition(1)), &
-                                            (zPosition(nZ + 1) - detectorZ) / (zPosition(nZ + 1) - zPosition(1)), &
-                                            detectorMu, detectorPhi,                                              &
+        incomingPhotons = new_PhotonStream ((detectorX - xPosition(1)) / (xPosition(nX + 1) - xPosition(1)), &
+                                            (detectorY - yPosition(1)) / (yPosition(nY + 1) - yPosition(1)), &
+                                            (detectorZ - zPosition(1)) / (zPosition(nZ + 1) - zPosition(1)), &
+                                            detectorMu, detectorPhi,                                         &
                                             numberOfPhotons = n, randomNumbers = randoms, status=status)
       end if
     end if 
   end subroutine getPhotons
 ! -------------------------------------------------------------------------------
-
+  subroutine writeResults_ASCII
+    integer :: s
+  
+    if(len_trim(outputASCIIFile) > 0) then 
+      open (unit=2, file=outputASCIIFile, status='unknown')
+      write (2,'(A)')               '!  I3RC Backwards Monte Carlo 3D Solar Radiative Transfer'
+      write (2,'(A,A60)')           '!  Property_File=', domainFileName
+      write (2,'(A,I10)')           '!  Num_Photons=', numPhotonsPerBatch * numBatches
+      write (2,'(A,L1,A,L1)')       '!  PhotonTracing=', useRayTracing, &
+                                    '    Russian_Roulette=',useRussianRoulette
+      write (2,'(A,L1,A,F5.2)')     '!  Hybrid_Phase_Func_for_Radiance=',useHybridPhaseFunsForIntenCalcs, &
+                                    '   Gaussian_Phase_Func_Width_deg=',hybridPhaseFunWidth
+      write (2,'(A,E13.6,A,F7.4)')  '!  Solar_Flux=', SolarFlux, '  Lambertian_Surface_Albedo=',surfaceAlbedo
+      write (2,'(3(A,E13.6))')      '!  Detector_X=', detectorX, '  Detector_Y=', detectorY, '  Detector_Z=', detectorZ
+      if(detDeltaX > 0. .or. detDeltaY > 0.) & 
+        write (2,'(2(A,E13.6))')    '!  Detector_Width_X=', detDeltaX, '  Detector_Width_Y=', detDeltaY
+      if (computeFlux) then 
+        write (2,'(A)')             '!  Flux calculation'
+        write (2,'(A)')             '!  Detector pointing ' // merge('up  ', 'down', detectorPointsUp)
+        write (2,'(A)') 
+        write (2,'(A)')             '!  Solar_Mu    Solar_Phi     Flux       StdErr'   
+      else
+        write (2,'(A)')             '!  Intensity calculation'
+        write (2,'(2(A,E13.6))')    '!  Detector_Mu=', detectorMu,  '  Detector_Phi=', detectorPhi
+        if(detDeltaTheta > 0.) &
+          write (2,'(A,E13.6)')     '!  Detector_Angular_Width=', detDeltaTheta
+        write (2,'(A)') 
+        write (2,'(A)')             '!  Solar_Mu  Solar_Phi   Intensity   StdErr'   
+      end if 
+      
+      do s = 1, numSuns
+        write(2, '(2x, f7.4, 2x, f7.2,  2(2x,E13.6))') solarMus(s), solarPhis(s), AccumOutputs(s, 1),  AccumOutputs(s, 2)
+      end do 
+      close (2)
+    end if 
+  end subroutine writeResults_ASCII
 end program backwardsMonteCarloDriver

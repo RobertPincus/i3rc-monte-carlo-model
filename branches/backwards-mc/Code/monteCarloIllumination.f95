@@ -250,16 +250,16 @@ contains
     ! Checks: are input parameters specified correctly? 
     if(numberOfPhotons <= 0) &
       call setStateToFailure(status, "setIllumination: must ask for non-negative number of photons.")
-    if(detectorX > 1. .or. detectorX <= 0. .or. &
-       detectorY > 1. .or. detectorY <= 0. .or. &
-       detectorZ > 1. .or. detectorZ <= 0. )    &
+    if(detectorX > 1. .or. detectorX < 0. .or. &
+       detectorY > 1. .or. detectorY < 0. .or. &
+       detectorZ > 1. .or. detectorZ < 0. )    &
       call setStateToFailure(status, "setIllumination: x, y, z positions must be between 0 and 1")
     if(present(deltaX)) then 
-      if(detectorX + deltaX/2. > 1. .or. detectorX - deltaX/2 <= 0.) &
+      if(detectorX + deltaX/2. > 1. .or. detectorX - deltaX/2 < 0.) &
         call setStateToFailure(status, "setIllumination: max, min positions must be between 0 and 1")
     end if 
     if(present(deltaY)) then 
-      if(detectorY + deltaY/2. > 1. .or. detectorY - deltaY/2 <= 0.) &
+      if(detectorY + deltaY/2. > 1. .or. detectorY - deltaY/2 < 0.) &
         call setStateToFailure(status, "setIllumination: max, min positions must be between 0 and 1")
     end if 
     if(      detectorPointsUp .and. abs(detectorZ - 1.) < 2. * spacing(1.)) &
