@@ -508,7 +508,7 @@ contains
         enddo
       enddo  
       close (2)
-      end if 
+    end if 
 
 
     ! -----------------------------------------
